@@ -1,14 +1,79 @@
 import type { MergedProject, RankedProject } from "../core/types.js";
 
+interface PromptOutput {
+  write: (...args: any[]) => any;
+  rows?: number;
+  columns?: number;
+  isTTY?: boolean;
+}
+
+const replaceProperty = (
+  target: PromptOutput,
+  key: keyof PromptOutput,
+  value: unknown,
+): (() => void) => {
+  const descriptor = Object.getOwnPropertyDescriptor(target, key);
+  Object.defineProperty(target, key, {
+    configurable: true,
+    writable: true,
+    value,
+  });
+  return () => {
+    if (descriptor) {
+      Object.defineProperty(target, key, descriptor);
+    } else {
+      delete target[key];
+    }
+  };
+};
+
+export const bridgePromptOutput = (
+  stdout: PromptOutput,
+  stderr: PromptOutput,
+): (() => void) => {
+  const restorers = [
+    replaceProperty(stdout, "write", stderr.write.bind(stderr)),
+  ];
+
+  if (!Number.isFinite(stdout.rows) || (stdout.rows ?? 0) <= 0) {
+    restorers.push(
+      replaceProperty(
+        stdout,
+        "rows",
+        Number.isFinite(stderr.rows) && (stderr.rows ?? 0) > 0
+          ? stderr.rows
+          : 24,
+      ),
+    );
+  }
+  if (!Number.isFinite(stdout.columns) || (stdout.columns ?? 0) <= 0) {
+    restorers.push(
+      replaceProperty(
+        stdout,
+        "columns",
+        Number.isFinite(stderr.columns) && (stderr.columns ?? 0) > 0
+          ? stderr.columns
+          : 80,
+      ),
+    );
+  }
+  if (stdout.isTTY === undefined && stderr.isTTY !== undefined) {
+    restorers.push(replaceProperty(stdout, "isTTY", stderr.isTTY));
+  }
+
+  return () => {
+    for (const restore of restorers.reverse()) {
+      restore();
+    }
+  };
+};
+
 const withOutputOnStderr = async <T>(operation: () => Promise<T>): Promise<T> => {
-  const stdoutWrite = process.stdout.write;
-  process.stdout.write = process.stderr.write.bind(
-    process.stderr,
-  ) as typeof process.stdout.write;
+  const restore = bridgePromptOutput(process.stdout, process.stderr);
   try {
     return await operation();
   } finally {
-    process.stdout.write = stdoutWrite;
+    restore();
   }
 };
 
@@ -102,14 +167,11 @@ export const createSpinner = async (): Promise<{
     callback: (...args: T) => void,
     ...args: T
   ): void => {
-    const stdoutWrite = process.stdout.write;
-    process.stdout.write = process.stderr.write.bind(
-      process.stderr,
-    ) as typeof process.stdout.write;
+    const restore = bridgePromptOutput(process.stdout, process.stderr);
     try {
       callback(...args);
     } finally {
-      process.stdout.write = stdoutWrite;
+      restore();
     }
   };
   return {
