@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-16T00:00:00.000Z",
+  "projects": [
+    {
+      "id": "git.100tal.com/group/report-web",
+      "name": "report-web",
+      "path": "/tmp/zhao-report-web",
+      "remote": "git@git.100tal.com:group/report-web.git",
+      "group": "group",
+      "description": "报告 H5",
+      "keywords": [
+        "report",
+        "vue3",
+        "vite"
+      ],
+      "stack": [
+        "vue3",
+        "vite"
+      ],
+      "domains": [
+        {
+          "value": "api.report.100tal.com",
+          "type": "api",
+          "source": "src/api/request.ts",
+          "confidence": 0.9
+        }
+      ],
+      "scannedAt": "2026-07-16T00:00:00.000Z"
+    }
+  ]
+}

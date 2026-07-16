@@ -1,0 +1,6 @@
+git.100tal.com/group/report-web:
+  aliases: [报告]
+  domains:
+    - value: report.100tal.com
+      type: page
+  keywords: [业务报告]
