@@ -226,7 +226,7 @@ zhao/
 │   └── middleware/onboard.ts
 ├── test/                     # giturl 解析、rank 排序、参数消歧必须有单测
 ├── package.json              # bin: {"zhao": "./dist/index.mjs"}, files: ["dist"]
-└── build: bun/tsup 打包为单文件 ESM，target node18
+└── build: tsdown 打包为单文件 ESM，target node18
 ```
 
 ## 7. 验收清单（MVP）

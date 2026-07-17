@@ -13,7 +13,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "dev": "bun src/index.ts",
     "prepack": "pnpm build",
     "test": "vitest run",
@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.15",
-    "tsup": "^8.5.0",
+    "tsdown": "^0.22.8",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
