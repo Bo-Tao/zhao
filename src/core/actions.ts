@@ -1,22 +1,22 @@
-import { execFile, spawn } from "node:child_process";
-import { promisify } from "node:util";
+import { execFile, spawn } from 'node:child_process'
+import { promisify } from 'node:util'
 
-const execFileAsync = promisify(execFile);
+const execFileAsync = promisify(execFile)
 
 export const openExternalUrl = async (
   url: string,
   platform = process.platform,
 ): Promise<void> => {
-  if (platform === "darwin") {
-    await execFileAsync("open", [url]);
-    return;
+  if (platform === 'darwin') {
+    await execFileAsync('open', [url])
+    return
   }
-  if (platform === "win32") {
-    await execFileAsync("cmd", ["/c", "start", "", url]);
-    return;
+  if (platform === 'win32') {
+    await execFileAsync('cmd', ['/c', 'start', '', url])
+    return
   }
-  await execFileAsync("xdg-open", [url]);
-};
+  await execFileAsync('xdg-open', [url])
+}
 
 const pipeToCommand = async (
   command: string,
@@ -24,33 +24,35 @@ const pipeToCommand = async (
   content: string,
 ): Promise<void> =>
   new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ["pipe", "ignore", "inherit"] });
-    child.on("error", reject);
-    child.on("close", (code) => {
+    const child = spawn(command, args, {
+      stdio: ['pipe', 'ignore', 'inherit'],
+    })
+    child.on('error', reject)
+    child.on('close', (code) => {
       if (code === 0) {
-        resolve();
+        resolve()
       } else {
-        reject(new Error(`${command} 退出码 ${code ?? "unknown"}`));
+        reject(new Error(`${command} 退出码 ${code ?? 'unknown'}`))
       }
-    });
-    child.stdin.end(content);
-  });
+    })
+    child.stdin.end(content)
+  })
 
 export const copyToClipboard = async (
   content: string,
   platform = process.platform,
 ): Promise<void> => {
-  if (platform === "darwin") {
-    await pipeToCommand("pbcopy", [], content);
-    return;
+  if (platform === 'darwin') {
+    await pipeToCommand('pbcopy', [], content)
+    return
   }
-  if (platform === "win32") {
-    await pipeToCommand("clip", [], content);
-    return;
+  if (platform === 'win32') {
+    await pipeToCommand('clip', [], content)
+    return
   }
   try {
-    await pipeToCommand("wl-copy", [], content);
+    await pipeToCommand('wl-copy', [], content)
   } catch {
-    await pipeToCommand("xclip", ["-selection", "clipboard"], content);
+    await pipeToCommand('xclip', ['-selection', 'clipboard'], content)
   }
-};
+}

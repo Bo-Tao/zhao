@@ -12,17 +12,17 @@
 
 ## 2. 技术栈与工程约束
 
-| 项 | 决策 |
-|---|---|
-| 运行时 | 开发用 Bun + TypeScript；**产物必须 Node 兼容**，发布为 npm 包 |
+| 项       | 决策                                                                                    |
+| -------- | --------------------------------------------------------------------------------------- |
+| 运行时   | 开发用 Bun + TypeScript；**产物必须 Node 兼容**，发布为 npm 包                          |
 | 兼容纪律 | 只用 `node:` 前缀标准模块，禁用 Bun 独有 API（保留将来 `bun build --compile` 的可能性） |
-| CLI 框架 | citty（`defineCommand`，子命令用动态 `import()` 懒加载，保证热路径启动速度） |
-| 交互 UI | `@clack/prompts`（选择器、onboarding 引导、spinner 全部用它） |
-| 其他依赖 | `yaml`（配置解析）、`zod`（配置/索引 schema 校验）、`fast-glob`（扫描 .git 目录） |
-| 不引入 | simple-git（直接解析 `.git/config`）、ink、老版 inquirer 大包 |
-| 包名 | `@botaoxyz/zhao`，bin 注册为 `zhao`（npm 上 `zhao` 裸名已被占用） |
-| 分发 | 私有 Verdaccio registry，`npm i -g` 安装 |
-| 性能要求 | `zhao <query>` 为每日高频热路径，启动到出结果目标 < 100ms（懒加载 + 索引常驻单文件） |
+| CLI 框架 | citty（`defineCommand`，子命令用动态 `import()` 懒加载，保证热路径启动速度）            |
+| 交互 UI  | `@clack/prompts`（选择器、onboarding 引导、spinner 全部用它）                           |
+| 其他依赖 | `yaml`（配置解析）、`zod`（配置/索引 schema 校验）、`fast-glob`（扫描 .git 目录）       |
+| 不引入   | simple-git（直接解析 `.git/config`）、ink、老版 inquirer 大包                           |
+| 包名     | `@botaoxyz/zhao`，bin 注册为 `zhao`（npm 上 `zhao` 裸名已被占用）                       |
+| 分发     | 私有 Verdaccio registry，`npm i -g` 安装                                                |
+| 性能要求 | `zhao <query>` 为每日高频热路径，启动到出结果目标 < 100ms（懒加载 + 索引常驻单文件）    |
 
 ## 3. 架构总览
 
@@ -57,12 +57,12 @@ zhao() {
 
 ### 3.2 四个数据文件（`~/.config/zhao/`）
 
-| 文件 | 内容 | 性质 |
-|---|---|---|
-| `config.yml` | 扫描根目录列表、ci URL 模板、fzf 开关等用户配置 | 用户维护 |
-| `index.json` | `zhao scan` 生成的项目索引 | **随时可删可重建，不含任何手工数据** |
+| 文件           | 内容                                                   | 性质                                 |
+| -------------- | ------------------------------------------------------ | ------------------------------------ |
+| `config.yml`   | 扫描根目录列表、ci URL 模板、fzf 开关等用户配置        | 用户维护                             |
+| `index.json`   | `zhao scan` 生成的项目索引                             | **随时可删可重建，不含任何手工数据** |
 | `projects.yml` | 手动元数据层：alias、域名、关键词、links、域名拉黑名单 | 用户/团队维护，未来通过 git 仓库共享 |
-| `state.json` | frecency 使用记录（每次选中项目时更新） | 程序维护，变更频繁 |
+| `state.json`   | frecency 使用记录（每次选中项目时更新）                | 程序维护，变更频繁                   |
 
 检索时四者在内存合并。合并优先级：projects.yml 手动数据 > index.json 自动数据。
 
@@ -74,25 +74,25 @@ zhao() {
   "generatedAt": "2026-07-16T10:00:00Z",
   "projects": [
     {
-      "id": "git.100tal.com/bigclass_xuefu_fe/tal-npm",  // remote 路径做稳定 ID（去协议、去 .git）
-      "name": "tal-npm",                                  // package.json name 或目录名
+      "id": "git.100tal.com/bigclass_xuefu_fe/tal-npm", // remote 路径做稳定 ID（去协议、去 .git）
+      "name": "tal-npm", // package.json name 或目录名
       "path": "/Users/dylan/work/fe/tal-npm",
       "remote": "git@git.100tal.com:bigclass_xuefu_fe/tal-npm.git",
-      "group": "bigclass_xuefu_fe",                       // GitLab group，业务线信息
-      "description": "学情报告 H5",                        // pkg description 或 README 一级标题
-      "keywords": ["report", "h5", "echarts"],            // pkg keywords + 显著依赖
-      "stack": ["vue3", "vite"],                          // 依赖特征推断
+      "group": "bigclass_xuefu_fe", // GitLab group，业务线信息
+      "description": "学情报告 H5", // pkg description 或 README 一级标题
+      "keywords": ["report", "h5", "echarts"], // pkg keywords + 显著依赖
+      "stack": ["vue3", "vite"], // 依赖特征推断
       "domains": [
         {
           "value": "api.report.100tal.com",
-          "type": "api",            // "api" | "page" | "guess"
+          "type": "api", // "api" | "page" | "guess"
           "source": "src/api/request.ts",
-          "confidence": 0.9
-        }
+          "confidence": 0.9,
+        },
       ],
-      "scannedAt": "2026-07-16T10:00:00Z"
-    }
-  ]
+      "scannedAt": "2026-07-16T10:00:00Z",
+    },
+  ],
 }
 ```
 
@@ -105,12 +105,12 @@ git.100tal.com/bigclass_xuefu_fe/tal-npm:
   aliases: [npm仓, tal-registry]
   domains:
     - value: npm.100tal.com
-      type: page          # 手动录入默认 confidence 1.0
+      type: page # 手动录入默认 confidence 1.0
   keywords: [私有npm, verdaccio]
-  links:                  # 通用关联链接机制
+  links: # 通用关联链接机制
     ci-test: https://build.100tal.com/xxx?env=test
     ci-prod: https://build.100tal.com/xxx?env=prod
-  blockedDomains:         # 拉黑的自动扫描候选，重新 scan 不复活
+  blockedDomains: # 拉黑的自动扫描候选，重新 scan 不复活
     - cdn.100tal.com
 ```
 
@@ -120,10 +120,10 @@ git.100tal.com/bigclass_xuefu_fe/tal-npm:
 scanRoots:
   - ~/work/fe
   - ~/work/mobile
-ciTemplates:              # 模板优先，projects.yml links 逐项目覆盖
-  test: "https://build.100tal.com/{group}/{name}?env=test"
-  prod: "https://build.100tal.com/{group}/{name}?env=prod"
-useFzf: false             # true 且检测到 fzf 时委托 fzf 做选择器
+ciTemplates: # 模板优先，projects.yml links 逐项目覆盖
+  test: 'https://build.100tal.com/{group}/{name}?env=test'
+  prod: 'https://build.100tal.com/{group}/{name}?env=prod'
+useFzf: false # true 且检测到 fzf 时委托 fzf 做选择器
 ```
 
 ## 4. 核心逻辑
@@ -177,33 +177,33 @@ useFzf: false             # true 且检测到 fzf 时委托 fzf 做选择器
 
 ### MVP（第一阶段，全部实现）
 
-| 命令 | 规格 |
-|---|---|
-| `zhao <query>` | 核心检索。resolveProject → 输出路径（wrapper 完成 cd）。flags：`--print`（仅打印路径）、`--claude`（cd 后启动 claude）、`--tmux`（tmux 新窗口打开）。无 query 时弹全量选择列表 |
-| `zhao init <shell>` | 输出对应 shell 的 wrapper 函数文本。仅支持 zsh、bash，其他值报错并列出支持项 |
-| `zhao setup` | 安装 wrapper：检测当前 shell 与 rc 文件 → **查重**（已存在则跳过，幂等）→ 展示将写入内容 → 确认后追加 `eval "$(zhao init zsh)"` → **打印改动的文件与内容**。rc 文件为符号链接时警告（dotfiles 场景）并需再次确认 |
-| `zhao scan` | 见 4.1。clack spinner 展示进度 |
+| 命令                  | 规格                                                                                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `zhao <query>`        | 核心检索。resolveProject → 输出路径（wrapper 完成 cd）。flags：`--print`（仅打印路径）、`--claude`（cd 后启动 claude）、`--tmux`（tmux 新窗口打开）。无 query 时弹全量选择列表                                                             |
+| `zhao init <shell>`   | 输出对应 shell 的 wrapper 函数文本。仅支持 zsh、bash，其他值报错并列出支持项                                                                                                                                                               |
+| `zhao setup`          | 安装 wrapper：检测当前 shell 与 rc 文件 → **查重**（已存在则跳过，幂等）→ 展示将写入内容 → 确认后追加 `eval "$(zhao init zsh)"` → **打印改动的文件与内容**。rc 文件为符号链接时警告（dotfiles 场景）并需再次确认                           |
+| `zhao scan`           | 见 4.1。clack spinner 展示进度                                                                                                                                                                                                             |
 | `zhao browse [query]` | resolveProject → remote 转 web URL（处理 SSH/HTTPS 两种格式，去 `.git` 后缀）→ `open` 打开浏览器。flags：`--copy`（复制 URL 到剪贴板）、`--print`。检测到无图形环境（如 SSH session）自动降级为打印 URL。拒绝多余参数（防止误当 git 透传） |
-| `zhao list` | 列出全部项目（名称、路径、描述）。`--json` 输出合并后的完整数据供管道/调试 |
+| `zhao list`           | 列出全部项目（名称、路径、描述）。`--json` 输出合并后的完整数据供管道/调试                                                                                                                                                                 |
 
 ### v2（第二阶段）
 
-| 命令 | 规格 |
-|---|---|
+| 命令                           | 规格                                                                                                                                                                                                                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `zhao ci [test\|prod] [query]` | 打开构建平台。参数消歧：首个位置参数 ∈ {test, prod} 则为环境，否则视为 query；环境默认 test。URL 解析：projects.yml links（`ci-test`/`ci-prod`）优先 → ciTemplates 模板填充 `{group}`/`{name}` 兜底 → 都没有则报错并提示配置方法。flags 与降级行为同 browse |
-| `zhao tag <project>` | 手动元数据录入："检索失败即录入"的入口。flags：`--domain`、`--kw`、`--alias`（均可多值）、`--rm-domain`（写入 blockedDomains）。project 参数支持模糊匹配 + 多命中选择 |
-| `zhao info <project>` | 展示单项目合并后的全部元数据，逐项标注来源（自动扫描/手动/模板/猜测） |
-| `zhao edit` | 用 `$EDITOR` 打开 projects.yml |
-| `zhao config` | `get <key>` / `set <key> <value>` / 无参时用 `$EDITOR` 打开 config.yml |
-| `zhao doctor` | 自检：wrapper 是否生效、config 与索引是否存在、索引新鲜度（超过 N 天提示重扫）、scanRoots 是否存在、Node 版本 |
+| `zhao tag <project>`           | 手动元数据录入："检索失败即录入"的入口。flags：`--domain`、`--kw`、`--alias`（均可多值）、`--rm-domain`（写入 blockedDomains）。project 参数支持模糊匹配 + 多命中选择                                                                                       |
+| `zhao info <project>`          | 展示单项目合并后的全部元数据，逐项标注来源（自动扫描/手动/模板/猜测）                                                                                                                                                                                       |
+| `zhao edit`                    | 用 `$EDITOR` 打开 projects.yml                                                                                                                                                                                                                              |
+| `zhao config`                  | `get <key>` / `set <key> <value>` / 无参时用 `$EDITOR` 打开 config.yml                                                                                                                                                                                      |
+| `zhao doctor`                  | 自检：wrapper 是否生效、config 与索引是否存在、索引新鲜度（超过 N 天提示重扫）、scanRoots 是否存在、Node 版本                                                                                                                                               |
 
 ### 后期（本次不实现，但架构需为其留位）
 
-| 命令 | 说明 |
-|---|---|
+| 命令                | 说明                                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `zhao open <alias>` | 打开 projects.yml links 中任意别名链接（log/monitor/page…）。**顶级命令准入线：仅 browse/ci，其余一律走 open** |
-| `zhao sync` | 从共享 git 仓库拉取合并 projects.yml（团队协作） |
-| `zhao scan --ai` | 对无描述仓库 headless 调 `claude -p` 生成摘要与关键词写回 |
+| `zhao sync`         | 从共享 git 仓库拉取合并 projects.yml（团队协作）                                                               |
+| `zhao scan --ai`    | 对无描述仓库 headless 调 `claude -p` 生成摘要与关键词写回                                                      |
 
 ## 6. 项目结构建议
 

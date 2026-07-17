@@ -1,1 +1,1 @@
-export type DefineCommand = typeof import("citty").defineCommand;
+export type DefineCommand = typeof import('citty').defineCommand

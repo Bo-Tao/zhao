@@ -1,5 +1,5 @@
 const passthroughCommands =
-  "init|setup|scan|tag|list|info|edit|config|doctor|browse|ci|open|sync";
+  'init|setup|scan|tag|list|info|edit|config|doctor|browse|ci|open|sync'
 
 const zshWrapper = `export ZHAO_SHELL_WRAPPED=1
 zhao() {
@@ -40,7 +40,7 @@ zhao() {
   if [[ "$use_claude" -eq 1 ]]; then
     command claude
   fi
-}`;
+}`
 
 const bashWrapper = `export ZHAO_SHELL_WRAPPED=1
 zhao() {
@@ -81,14 +81,14 @@ zhao() {
   if [[ "$use_claude" -eq 1 ]]; then
     command claude
   fi
-}`;
+}`
 
 export const getShellWrapper = (shell: string): string => {
-  if (shell === "zsh") {
-    return zshWrapper;
+  if (shell === 'zsh') {
+    return zshWrapper
   }
-  if (shell === "bash") {
-    return bashWrapper;
+  if (shell === 'bash') {
+    return bashWrapper
   }
-  throw new Error(`不支持 ${shell}，仅支持 zsh、bash`);
-};
+  throw new Error(`不支持 ${shell}，仅支持 zsh、bash`)
+}
