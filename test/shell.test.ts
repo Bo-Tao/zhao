@@ -66,6 +66,71 @@ describe('shell wrapper', () => {
     },
   )
 
+  it.each(['zsh', 'bash'])(
+    '%s wrapper 正确处理项目动作参数',
+    async (shell) => {
+      const directory = join(
+        tmpdir(),
+        `zhao-actions-${shell}-${process.pid}-${Date.now()}`,
+      )
+      const binDirectory = join(directory, 'bin')
+      const projectDirectory = join(directory, 'project')
+      await mkdir(binDirectory, { recursive: true })
+      await mkdir(projectDirectory, { recursive: true })
+
+      const runWrapper = (command: string) =>
+        spawnSync(shell, ['-c', `${getShellWrapper(shell)}\n${command}`], {
+          cwd: directory,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: `${binDirectory}:${process.env.PATH ?? ''}`,
+            ZHAO_TEST_PROJECT: projectDirectory,
+          },
+        })
+
+      await writeFile(
+        join(binDirectory, 'zhao'),
+        '#!/bin/sh\nprintf "%s\\n" "$ZHAO_TEST_PROJECT"\n',
+        { mode: 0o755 },
+      )
+      for (const editor of ['claude', 'codex']) {
+        await writeFile(
+          join(binDirectory, editor),
+          `#!/bin/sh\nprintf "${editor}:%s\\n" "$PWD"\n`,
+          { mode: 0o755 },
+        )
+      }
+      await writeFile(
+        join(binDirectory, 'tmux'),
+        '#!/bin/sh\nprintf "tmux:%s\\n" "$*"\n',
+        { mode: 0o755 },
+      )
+
+      for (const flag of ['-p', '--print']) {
+        expect(runWrapper(`zhao 项目 ${flag}`)).toMatchObject({
+          status: 0,
+          stdout: `${projectDirectory}\n`,
+          stderr: '',
+        })
+      }
+      expect(runWrapper('zhao 项目 -cc').stdout).toBe(
+        `claude:${projectDirectory}\n`,
+      )
+      expect(runWrapper('zhao 项目 -cdx').stdout).toBe(
+        `codex:${projectDirectory}\n`,
+      )
+      expect(runWrapper('zhao 项目 -t').stdout).toBe(
+        `tmux:new-window -c ${projectDirectory}\n`,
+      )
+      const conflict = runWrapper('zhao 项目 -cc --codex')
+      expect(conflict.status).not.toBe(0)
+      expect(conflict.stderr).toContain(
+        '--claude/-cc 与 --codex/-cdx 不能同时使用',
+      )
+    },
+  )
+
   it('追加 wrapper 配置是幂等的', () => {
     const line = 'eval "$(zhao init zsh)"'
 

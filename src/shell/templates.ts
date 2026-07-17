@@ -10,7 +10,9 @@ zhao() {
       ;;
   esac
 
+  local use_print=0
   local use_claude=0
+  local use_codex=0
   local use_tmux=0
   local -a args
   local arg
@@ -20,16 +22,27 @@ zhao() {
         command zhao "$@"
         return
         ;;
-      --claude) use_claude=1 ;;
-      --tmux) use_tmux=1 ;;
-      --print) ;;
+      -p|--print) use_print=1 ;;
+      -cc|--claude) use_claude=1 ;;
+      -cdx|--codex) use_codex=1 ;;
+      -t|--tmux) use_tmux=1 ;;
       *) args+=("$arg") ;;
     esac
   done
 
+  if [[ "$use_claude" -eq 1 && "$use_codex" -eq 1 ]]; then
+    printf '%s\n' '错误：--claude/-cc 与 --codex/-cdx 不能同时使用。' >&2
+    return 2
+  fi
+
   local dir
   dir="$(command zhao --print "\${args[@]}")" || return
   [[ -z "$dir" ]] && return
+
+  if [[ "$use_print" -eq 1 ]]; then
+    printf '%s\n' "$dir"
+    return
+  fi
 
   if [[ "$use_tmux" -eq 1 ]]; then
     tmux new-window -c "$dir"
@@ -39,6 +52,8 @@ zhao() {
   cd "$dir" || return
   if [[ "$use_claude" -eq 1 ]]; then
     command claude
+  elif [[ "$use_codex" -eq 1 ]]; then
+    command codex
   fi
 }`
 
@@ -51,7 +66,9 @@ zhao() {
       ;;
   esac
 
+  local use_print=0
   local use_claude=0
+  local use_codex=0
   local use_tmux=0
   local -a args=()
   local arg
@@ -61,16 +78,27 @@ zhao() {
         command zhao "$@"
         return
         ;;
-      --claude) use_claude=1 ;;
-      --tmux) use_tmux=1 ;;
-      --print) ;;
+      -p|--print) use_print=1 ;;
+      -cc|--claude) use_claude=1 ;;
+      -cdx|--codex) use_codex=1 ;;
+      -t|--tmux) use_tmux=1 ;;
       *) args+=("$arg") ;;
     esac
   done
 
+  if [[ "$use_claude" -eq 1 && "$use_codex" -eq 1 ]]; then
+    printf '%s\n' '错误：--claude/-cc 与 --codex/-cdx 不能同时使用。' >&2
+    return 2
+  fi
+
   local dir
   dir="$(command zhao --print "\${args[@]}")" || return
   [[ -z "$dir" ]] && return
+
+  if [[ "$use_print" -eq 1 ]]; then
+    printf '%s\n' "$dir"
+    return
+  fi
 
   if [[ "$use_tmux" -eq 1 ]]; then
     tmux new-window -c "$dir"
@@ -80,6 +108,8 @@ zhao() {
   cd "$dir" || return
   if [[ "$use_claude" -eq 1 ]]; then
     command claude
+  elif [[ "$use_codex" -eq 1 ]]; then
+    command codex
   fi
 }`
 
