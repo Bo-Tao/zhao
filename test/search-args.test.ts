@@ -9,6 +9,7 @@ describe('检索热路径参数', () => {
       query: '报告',
       print: true,
       claude: true,
+      codex: false,
       tmux: false,
     })
   })
@@ -18,8 +19,32 @@ describe('检索热路径参数', () => {
       query: undefined,
       print: false,
       claude: false,
+      codex: false,
       tmux: true,
     })
+  })
+
+  it('长短参数具有相同行为', () => {
+    expect(parseSearchArgs(['-p', '报告', '-cc', '-t'])).toEqual({
+      query: '报告',
+      print: true,
+      claude: true,
+      codex: false,
+      tmux: true,
+    })
+    expect(parseSearchArgs(['项目', '-cdx'])).toEqual({
+      query: '项目',
+      print: false,
+      claude: false,
+      codex: true,
+      tmux: false,
+    })
+  })
+
+  it('拒绝同时启动 Claude 和 Codex', () => {
+    expect(() => parseSearchArgs(['项目', '--claude', '-cdx'])).toThrow(
+      '--claude/-cc 与 --codex/-cdx 不能同时使用',
+    )
   })
 
   it('拒绝未知 flag 和多个 query', () => {

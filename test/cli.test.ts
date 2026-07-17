@@ -32,7 +32,11 @@ describe('CLI 元信息输出', () => {
     expect(output).toContain('\nARGUMENTS\n')
     expect(output).toContain('\nOPTIONS\n')
     expect(output).toContain('\nCOMMANDS\n')
-    expect(detailLines).toHaveLength(9)
+    expect(output).toContain('`-p, --print`')
+    expect(output).toContain('`-cc, --claude`')
+    expect(output).toContain('`-cdx, --codex`')
+    expect(output).toContain('`-t, --tmux`')
+    expect(detailLines).toHaveLength(10)
     expect(detailLines.every((line) => line.startsWith('`'))).toBe(true)
     expect(
       new Set(detailLines.map((line) => line.search(/[\u3400-\u9fff]/))).size,

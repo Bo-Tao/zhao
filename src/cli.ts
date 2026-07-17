@@ -14,16 +14,25 @@ const searchArgs = {
   },
   print: {
     type: 'boolean' as const,
+    alias: ['p'],
     description: '仅打印选中的项目路径',
     default: false,
   },
   claude: {
     type: 'boolean' as const,
+    alias: ['cc'],
     description: '由 shell wrapper 在 cd 后启动 Claude Code',
+    default: false,
+  },
+  codex: {
+    type: 'boolean' as const,
+    alias: ['cdx'],
+    description: '由 shell wrapper 在 cd 后启动 Codex',
     default: false,
   },
   tmux: {
     type: 'boolean' as const,
+    alias: ['t'],
     description: '由 shell wrapper 在 tmux 新窗口中打开',
     default: false,
   },
