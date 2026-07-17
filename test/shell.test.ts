@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -27,6 +28,41 @@ describe("shell wrapper", () => {
     expect(wrapper).toContain('command claude');
     expect(wrapper).toContain('tmux new-window -c "$dir"');
   });
+
+  it.each(["zsh", "bash"])(
+    "%s wrapper 将帮助与版本参数直接透传给 CLI",
+    async (shell) => {
+      const directory = join(
+        tmpdir(),
+        `zhao-help-${shell}-${process.pid}-${Date.now()}`,
+      );
+      const binDirectory = join(directory, "bin");
+      const executable = join(binDirectory, "zhao");
+      await mkdir(binDirectory, { recursive: true });
+      await writeFile(executable, '#!/bin/sh\nprintf "%s\\n" "$*"\n', {
+        mode: 0o755,
+      });
+
+      for (const flag of ["-h", "--help", "-v", "--version"]) {
+        const result = spawnSync(
+          shell,
+          ["-c", `${getShellWrapper(shell)}\nzhao ${flag}`],
+          {
+            cwd: directory,
+            encoding: "utf8",
+            env: {
+              ...process.env,
+              PATH: `${binDirectory}:${process.env.PATH ?? ""}`,
+            },
+          },
+        );
+
+        expect(result.status).toBe(0);
+        expect(result.stdout).toBe(`${flag}\n`);
+        expect(result.stderr).toBe("");
+      }
+    },
+  );
 
   it("追加 wrapper 配置是幂等的", () => {
     const line = 'eval "$(zhao init zsh)"';

@@ -31,6 +31,10 @@ describe("检索热路径参数", () => {
 });
 
 describe("入口分发", () => {
+  it("将短版本参数分发到管理命令", () => {
+    expect(classifyInvocation(["-v"])).toBe("management");
+  });
+
   it("不会把尚未实现的保留命令误当作项目 query", () => {
     expect(classifyInvocation(["tag", "repo"])).toBe("future-command");
     expect(classifyInvocation(["ci", "test"])).toBe("future-command");

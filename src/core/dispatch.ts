@@ -23,6 +23,7 @@ export const classifyInvocation = (rawArgs: string[]): InvocationKind => {
   if (
     rawArgs.includes("--help") ||
     rawArgs.includes("-h") ||
+    rawArgs.includes("-v") ||
     rawArgs.includes("--version")
   ) {
     return "management";

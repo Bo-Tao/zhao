@@ -16,6 +16,10 @@ zhao() {
   local arg
   for arg in "$@"; do
     case "$arg" in
+      -h|--help|-v|--version)
+        command zhao "$@"
+        return
+        ;;
       --claude) use_claude=1 ;;
       --tmux) use_tmux=1 ;;
       --print) ;;
@@ -53,6 +57,10 @@ zhao() {
   local arg
   for arg in "$@"; do
     case "$arg" in
+      -h|--help|-v|--version)
+        command zhao "$@"
+        return
+        ;;
       --claude) use_claude=1 ;;
       --tmux) use_tmux=1 ;;
       --print) ;;

@@ -29,6 +29,29 @@ const searchArgs = {
   },
 };
 
+const alignUsageColumns = (usage: string): string => {
+  const rows = usage.split("\n");
+  const details = rows.map((line) => {
+    const match = line.match(/^\s*(`[^`]+`)\s{2,}(.*)$/);
+    return match
+      ? { label: match[1] as string, description: (match[2] as string).trim() }
+      : undefined;
+  });
+  const labelWidth = Math.max(
+    0,
+    ...details.map((detail) => detail?.label.length ?? 0),
+  );
+
+  return rows
+    .map((line, index) => {
+      const detail = details[index];
+      return detail
+        ? `${detail.label.padEnd(labelWidth)}  ${detail.description}`
+        : line;
+    })
+    .join("\n");
+};
+
 export const runCittyCli = async (rawArgs: string[]): Promise<void> => {
   const { defineCommand, renderUsage, runCommand } = await import("citty");
   const subCommands = {
@@ -53,7 +76,10 @@ export const runCittyCli = async (rawArgs: string[]): Promise<void> => {
   });
   const firstPositional = rawArgs.find((argument) => !argument.startsWith("-"));
 
-  if (rawArgs.length === 1 && rawArgs[0] === "--version") {
+  if (
+    rawArgs.length === 1 &&
+    (rawArgs[0] === "-v" || rawArgs[0] === "--version")
+  ) {
     process.stdout.write(`${meta.version}\n`);
     return;
   }
@@ -69,7 +95,9 @@ export const runCittyCli = async (rawArgs: string[]): Promise<void> => {
       ]();
       parent = rootCommand;
     }
-    process.stdout.write(`${await renderUsage(command, parent)}\n`);
+    process.stdout.write(
+      `${alignUsageColumns(await renderUsage(command, parent))}\n`,
+    );
     return;
   }
   await runCommand(rootCommand, { rawArgs });
