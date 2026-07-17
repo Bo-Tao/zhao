@@ -41,19 +41,48 @@ zhao() {
     init|setup|scan|tag|list|info|edit|config|doctor|browse|ci|open|sync)
       command zhao "$@" ;;              # 管理类/打开类命令直接透传
     *)
+      # 先解析 wrapper 专属 flags，并从 query 参数中移除
+      # -p/--print、-cc/--claude、-cdx/--codex、-t/--tmux
+      # -h/--help、-v/--version 直接透传给二进制
+      local use_print=0 use_claude=0 use_codex=0 use_tmux=0
+      local -a args
+      for arg in "$@"; do
+        case "$arg" in
+          -h|--help|-v|--version) command zhao "$@"; return ;;
+          -p|--print) use_print=1 ;;
+          -cc|--claude) use_claude=1 ;;
+          -cdx|--codex) use_codex=1 ;;
+          -t|--tmux) use_tmux=1 ;;
+          *) args+=("$arg") ;;
+        esac
+      done
+      # --claude/-cc 与 --codex/-cdx 不能同时使用，冲突返回状态 2
+      # 其他参数保留为 query，交给二进制解析
+      # （zsh/bash 模板分别使用对应的数组语法）
+      if [[ "$use_claude" -eq 1 && "$use_codex" -eq 1 ]]; then
+        printf '%s\n' '错误：--claude/-cc 与 --codex/-cdx 不能同时使用。' >&2
+        return 2
+      fi
       local dir
-      dir="$(command zhao --print "$@")" || return
-      if [[ -n "$dir" ]]; then
-        cd "$dir" || return
-        # flag 后处理由 wrapper 完成：
-        # --claude → cd 后 exec claude
-        # --tmux   → 改为 tmux new-window -c "$dir"
-      fi ;;
+      dir="$(command zhao --print "${args[@]}")" || return
+      [[ -z "$dir" ]] && return
+      if [[ "$use_print" -eq 1 ]]; then
+        printf '%s\n' "$dir"       # 纯打印路径，不改变 cwd 或启动编辑器
+        return
+      fi
+      if [[ "$use_tmux" -eq 1 ]]; then
+        tmux new-window -c "$dir"   # tmux 优先于编辑器，并在新窗口打开
+        return
+      fi
+      cd "$dir" || return
+      [[ "$use_claude" -eq 1 ]] && command claude
+      [[ "$use_codex" -eq 1 ]] && command codex
+      ;;
   esac
 }
 ```
 
-注意：`--claude`、`--tmux`、`--print` 的分支逻辑在 wrapper 层处理；二进制侧统一只输出路径。wrapper 需导出标记变量（如 `export ZHAO_SHELL_WRAPPED=1`），供 `doctor` 和 onboarding 检测 wrapper 是否生效。
+注意：`--print/-p`、`--claude/-cc`、`--codex/-cdx`、`--tmux/-t` 的分支逻辑在 wrapper 层处理；二进制侧通过 `--print` 统一解析并输出路径。纯打印只输出路径并保持当前目录不变；Claude 与 Codex 冲突时 wrapper 返回状态 2；tmux 与编辑器参数同时出现时 tmux 优先。wrapper 需导出标记变量（如 `export ZHAO_SHELL_WRAPPED=1`），供 `doctor` 和 onboarding 检测 wrapper 是否生效。
 
 ### 3.2 四个数据文件（`~/.config/zhao/`）
 
@@ -179,7 +208,7 @@ useFzf: false # true 且检测到 fzf 时委托 fzf 做选择器
 
 | 命令                  | 规格                                                                                                                                                                                                                                       |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `zhao <query>`        | 核心检索。resolveProject → 输出路径（wrapper 完成 cd）。flags：`--print`（仅打印路径）、`--claude`（cd 后启动 claude）、`--tmux`（tmux 新窗口打开）。无 query 时弹全量选择列表                                                             |
+| `zhao <query>`        | 核心检索。resolveProject → 输出路径（wrapper 完成 cd）。flags：`--print/-p`（仅打印路径）、`--claude/-cc`（cd 后启动 Claude Code）、`--codex/-cdx`（cd 后启动 Codex）、`--tmux/-t`（tmux 新窗口打开）。Claude 与 Codex 不能同时使用；tmux 与编辑器参数同时出现时 tmux 优先。无 query 时弹全量选择列表 |
 | `zhao init <shell>`   | 输出对应 shell 的 wrapper 函数文本。仅支持 zsh、bash，其他值报错并列出支持项                                                                                                                                                               |
 | `zhao setup`          | 安装 wrapper：检测当前 shell 与 rc 文件 → **查重**（已存在则跳过，幂等）→ 展示将写入内容 → 确认后追加 `eval "$(zhao init zsh)"` → **打印改动的文件与内容**。rc 文件为符号链接时警告（dotfiles 场景）并需再次确认                           |
 | `zhao scan`           | 见 4.1。clack spinner 展示进度                                                                                                                                                                                                             |
