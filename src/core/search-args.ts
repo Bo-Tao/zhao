@@ -1,3 +1,5 @@
+import { ArgumentError } from './argument-error.js'
+
 export interface SearchArgs {
   query?: string
   print: boolean
@@ -26,18 +28,18 @@ export const parseSearchArgs = (rawArgs: string[]): SearchArgs => {
     } else if (argument === '--tmux' || argument === '-t') {
       result.tmux = true
     } else if (argument.startsWith('-')) {
-      throw new Error(`未知参数：${argument}`)
+      throw new ArgumentError(`未知参数：${argument}`)
     } else {
       positionals.push(argument)
     }
   }
 
   if (result.claude && result.codex) {
-    throw new Error('--claude/-cc 与 --codex/-cdx 不能同时使用。')
+    throw new ArgumentError('--claude/-cc 与 --codex/-cdx 不能同时使用。')
   }
 
   if (positionals.length > 1) {
-    throw new Error('zhao 只接受一个 query；包含空格时请使用引号。')
+    throw new ArgumentError('zhao 只接受一个 query；包含空格时请使用引号。')
   }
   result.query = positionals[0]
   return result

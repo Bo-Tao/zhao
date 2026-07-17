@@ -72,7 +72,7 @@ describe('shell wrapper', () => {
       `zhao-actions-${shell}-${process.pid}-${Date.now()}`,
     )
     const binDirectory = join(directory, 'bin')
-    const projectDirectory = join(directory, 'project')
+    const projectDirectory = join(directory, 'project with spaces')
     const callLog = join(directory, 'calls.log')
     const query = '项目 查询'
     await mkdir(binDirectory, { recursive: true })
@@ -124,8 +124,10 @@ describe('shell wrapper', () => {
       join(binDirectory, 'tmux'),
       [
         '#!/bin/sh',
-        'printf \'tmux:%s\\n\' "$*" >> "$ZHAO_TEST_LOG"',
-        'printf \'tmux:%s\\n\' "$*"',
+        'for arg in "$@"; do',
+        '  printf \'tmux:[%s]\\n\' "$arg" >> "$ZHAO_TEST_LOG"',
+        '  printf \'tmux:[%s]\\n\' "$arg"',
+        'done',
         '',
       ].join('\n'),
       { mode: 0o755 },
@@ -168,11 +170,11 @@ describe('shell wrapper', () => {
 
       expect(result).toMatchObject({
         status: 0,
-        stdout: `tmux:new-window -c ${projectDirectory}\n`,
+        stdout: `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
         stderr: '',
       })
       expect(await getCalls()).toBe(
-        `${zhaoCall}tmux:new-window -c ${projectDirectory}\n`,
+        `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
       )
     }
 
@@ -199,13 +201,13 @@ describe('shell wrapper', () => {
       ],
       [
         '-t --tmux',
-        `tmux:new-window -c ${projectDirectory}\n`,
-        `${zhaoCall}tmux:new-window -c ${projectDirectory}\n`,
+        `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
       ],
       [
         '--tmux -t',
-        `tmux:new-window -c ${projectDirectory}\n`,
-        `${zhaoCall}tmux:new-window -c ${projectDirectory}\n`,
+        `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
       ],
       ['-p --print', `${projectDirectory}\n`, zhaoCall],
       ['--print -p', `${projectDirectory}\n`, zhaoCall],

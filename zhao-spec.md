@@ -75,8 +75,11 @@ zhao() {
         return
       fi
       cd "$dir" || return
-      [[ "$use_claude" -eq 1 ]] && command claude
-      [[ "$use_codex" -eq 1 ]] && command codex
+      if [[ "$use_claude" -eq 1 ]]; then
+        command claude
+      elif [[ "$use_codex" -eq 1 ]]; then
+        command codex
+      fi
       ;;
   esac
 }

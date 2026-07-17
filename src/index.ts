@@ -1,4 +1,5 @@
 import { classifyInvocation } from './core/dispatch.js'
+import { ArgumentError } from './core/argument-error.js'
 import { resolveStoredProject } from './core/runtime.js'
 import { parseSearchArgs } from './core/search-args.js'
 import { ensureOnboarded } from './middleware/onboard.js'
@@ -23,5 +24,5 @@ try {
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error)
   process.stderr.write(`错误：${message}\n`)
-  process.exitCode = 1
+  process.exitCode = error instanceof ArgumentError ? 2 : 1
 }
