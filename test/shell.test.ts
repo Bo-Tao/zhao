@@ -66,70 +66,170 @@ describe('shell wrapper', () => {
     },
   )
 
-  it.each(['zsh', 'bash'])(
-    '%s wrapper 正确处理项目动作参数',
-    async (shell) => {
-      const directory = join(
-        tmpdir(),
-        `zhao-actions-${shell}-${process.pid}-${Date.now()}`,
-      )
-      const binDirectory = join(directory, 'bin')
-      const projectDirectory = join(directory, 'project')
-      await mkdir(binDirectory, { recursive: true })
-      await mkdir(projectDirectory, { recursive: true })
+  it.each(['zsh', 'bash'])('%s wrapper 正确处理项目动作参数', async (shell) => {
+    const directory = join(
+      tmpdir(),
+      `zhao-actions-${shell}-${process.pid}-${Date.now()}`,
+    )
+    const binDirectory = join(directory, 'bin')
+    const projectDirectory = join(directory, 'project')
+    const callLog = join(directory, 'calls.log')
+    const query = '项目 查询'
+    await mkdir(binDirectory, { recursive: true })
+    await mkdir(projectDirectory, { recursive: true })
+    await writeFile(callLog, '')
 
-      const runWrapper = (command: string) =>
-        spawnSync(shell, ['-c', `${getShellWrapper(shell)}\n${command}`], {
-          cwd: directory,
-          encoding: 'utf8',
-          env: {
-            ...process.env,
-            PATH: `${binDirectory}:${process.env.PATH ?? ''}`,
-            ZHAO_TEST_PROJECT: projectDirectory,
-          },
-        })
+    const runWrapper = (command: string) =>
+      spawnSync(shell, ['-c', `${getShellWrapper(shell)}\n${command}`], {
+        cwd: directory,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${binDirectory}:${process.env.PATH ?? ''}`,
+          ZHAO_TEST_PROJECT: projectDirectory,
+          ZHAO_TEST_LOG: callLog,
+        },
+      })
+    const getCalls = () => readFile(callLog, 'utf8')
+    const resetCalls = () => writeFile(callLog, '')
+    const zhaoCall = `zhao:[--print]:[${query}]\n`
 
+    await writeFile(
+      join(binDirectory, 'zhao'),
+      [
+        '#!/bin/sh',
+        'printf \'zhao\' >> "$ZHAO_TEST_LOG"',
+        'for arg in "$@"; do',
+        '  printf \':[%s]\' "$arg" >> "$ZHAO_TEST_LOG"',
+        'done',
+        'printf \'\\n\' >> "$ZHAO_TEST_LOG"',
+        'printf \'%s\\n\' "$ZHAO_TEST_PROJECT"',
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    )
+    for (const editor of ['claude', 'codex']) {
       await writeFile(
-        join(binDirectory, 'zhao'),
-        '#!/bin/sh\nprintf "%s\\n" "$ZHAO_TEST_PROJECT"\n',
+        join(binDirectory, editor),
+        [
+          '#!/bin/sh',
+          `printf '${editor}:%s\\n' "$PWD" >> "$ZHAO_TEST_LOG"`,
+          `printf '${editor}:%s\\n' "$PWD"`,
+          '',
+        ].join('\n'),
         { mode: 0o755 },
       )
-      for (const editor of ['claude', 'codex']) {
-        await writeFile(
-          join(binDirectory, editor),
-          `#!/bin/sh\nprintf "${editor}:%s\\n" "$PWD"\n`,
-          { mode: 0o755 },
-        )
-      }
-      await writeFile(
-        join(binDirectory, 'tmux'),
-        '#!/bin/sh\nprintf "tmux:%s\\n" "$*"\n',
-        { mode: 0o755 },
+    }
+    await writeFile(
+      join(binDirectory, 'tmux'),
+      [
+        '#!/bin/sh',
+        'printf \'tmux:%s\\n\' "$*" >> "$ZHAO_TEST_LOG"',
+        'printf \'tmux:%s\\n\' "$*"',
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    )
+
+    for (const flag of ['-p', '--print']) {
+      await resetCalls()
+      const result = runWrapper(
+        `before=$PWD; zhao "${query}" ${flag}; exit_code=$?; [ "$PWD" = "$before" ] && printf 'cwd-unchanged\\n'; exit "$exit_code"`,
       )
 
-      for (const flag of ['-p', '--print']) {
-        expect(runWrapper(`zhao 项目 ${flag}`)).toMatchObject({
-          status: 0,
-          stdout: `${projectDirectory}\n`,
-          stderr: '',
-        })
-      }
-      expect(runWrapper('zhao 项目 -cc').stdout).toBe(
+      expect(result).toMatchObject({
+        status: 0,
+        stdout: `${projectDirectory}\ncwd-unchanged\n`,
+        stderr: '',
+      })
+      expect(await getCalls()).toBe(zhaoCall)
+    }
+
+    for (const [flag, editor] of [
+      ['-cc', 'claude'],
+      ['--codex', 'codex'],
+    ]) {
+      await resetCalls()
+      const result = runWrapper(`zhao "${query}" ${flag}`)
+
+      expect(result).toMatchObject({
+        status: 0,
+        stdout: `${editor}:${projectDirectory}\n`,
+        stderr: '',
+      })
+      expect(await getCalls()).toBe(
+        `${zhaoCall}${editor}:${projectDirectory}\n`,
+      )
+    }
+
+    for (const flags of ['-cc --tmux', '--tmux -cdx']) {
+      await resetCalls()
+      const result = runWrapper(`zhao "${query}" ${flags}`)
+
+      expect(result).toMatchObject({
+        status: 0,
+        stdout: `tmux:new-window -c ${projectDirectory}\n`,
+        stderr: '',
+      })
+      expect(await getCalls()).toBe(
+        `${zhaoCall}tmux:new-window -c ${projectDirectory}\n`,
+      )
+    }
+
+    for (const [flags, expectedOutput, expectedCalls] of [
+      [
+        '-cc --claude',
         `claude:${projectDirectory}\n`,
-      )
-      expect(runWrapper('zhao 项目 -cdx').stdout).toBe(
+        `${zhaoCall}claude:${projectDirectory}\n`,
+      ],
+      [
+        '--claude -cc',
+        `claude:${projectDirectory}\n`,
+        `${zhaoCall}claude:${projectDirectory}\n`,
+      ],
+      [
+        '-cdx --codex',
         `codex:${projectDirectory}\n`,
-      )
-      expect(runWrapper('zhao 项目 -t').stdout).toBe(
+        `${zhaoCall}codex:${projectDirectory}\n`,
+      ],
+      [
+        '--codex -cdx',
+        `codex:${projectDirectory}\n`,
+        `${zhaoCall}codex:${projectDirectory}\n`,
+      ],
+      [
+        '-t --tmux',
         `tmux:new-window -c ${projectDirectory}\n`,
-      )
-      const conflict = runWrapper('zhao 项目 -cc --codex')
-      expect(conflict.status).not.toBe(0)
-      expect(conflict.stderr).toContain(
-        '--claude/-cc 与 --codex/-cdx 不能同时使用',
-      )
-    },
-  )
+        `${zhaoCall}tmux:new-window -c ${projectDirectory}\n`,
+      ],
+      [
+        '--tmux -t',
+        `tmux:new-window -c ${projectDirectory}\n`,
+        `${zhaoCall}tmux:new-window -c ${projectDirectory}\n`,
+      ],
+      ['-p --print', `${projectDirectory}\n`, zhaoCall],
+      ['--print -p', `${projectDirectory}\n`, zhaoCall],
+    ]) {
+      await resetCalls()
+      const result = runWrapper(`zhao "${query}" ${flags}`)
+
+      expect(result).toMatchObject({
+        status: 0,
+        stdout: expectedOutput,
+        stderr: '',
+      })
+      expect(await getCalls()).toBe(expectedCalls)
+    }
+
+    await resetCalls()
+    const conflict = runWrapper(`zhao "${query}" -cc --codex`)
+    expect(conflict.status).toBe(2)
+    expect(conflict.stdout).toBe('')
+    expect(conflict.stderr).toContain(
+      '--claude/-cc 与 --codex/-cdx 不能同时使用',
+    )
+    expect(await getCalls()).toBe('')
+  })
 
   it('追加 wrapper 配置是幂等的', () => {
     const line = 'eval "$(zhao init zsh)"'
