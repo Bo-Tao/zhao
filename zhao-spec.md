@@ -71,7 +71,11 @@ zhao() {
         return
       fi
       if [[ "$use_tmux" -eq 1 ]]; then
-        tmux new-window -c "$dir"   # tmux 优先于编辑器，并在新窗口打开
+        if [[ -n "$TMUX" ]]; then
+          tmux new-window -c "$dir" # 已在 tmux 中时打开新窗口
+        else
+          tmux new-session -c "$dir" # 否则创建并进入新会话
+        fi
         return
       fi
       cd "$dir" || return
@@ -85,7 +89,7 @@ zhao() {
 }
 ```
 
-注意：`--print/-p`、`--claude/-cc`、`--codex/-cdx`、`--tmux/-t` 的分支逻辑在 wrapper 层处理；二进制侧通过 `--print` 统一解析并输出路径。纯打印只输出路径并保持当前目录不变；Claude 与 Codex 冲突时 wrapper 返回状态 2；tmux 与编辑器参数同时出现时 tmux 优先。wrapper 需导出标记变量（如 `export ZHAO_SHELL_WRAPPED=1`），供 `doctor` 和 onboarding 检测 wrapper 是否生效。
+注意：`--print/-p`、`--claude/-cc`、`--codex/-cdx`、`--tmux/-t` 的分支逻辑在 wrapper 层处理；二进制侧通过 `--print` 统一解析并输出路径。纯打印只输出路径并保持当前目录不变；Claude 与 Codex 冲突时 wrapper 返回状态 2；tmux 与编辑器参数同时出现时 tmux 优先。使用 tmux 参数时，wrapper 在现有 tmux 客户端内打开新窗口，否则创建并进入新会话。wrapper 需导出标记变量（如 `export ZHAO_SHELL_WRAPPED=1`），供 `doctor` 和 onboarding 检测 wrapper 是否生效。
 
 ### 3.2 四个数据文件（`~/.config/zhao/`）
 
@@ -209,14 +213,14 @@ useFzf: false # true 且检测到 fzf 时委托 fzf 做选择器
 
 ### MVP（第一阶段，全部实现）
 
-| 命令                  | 规格                                                                                                                                                                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `zhao <query>`        | 核心检索。resolveProject → 输出路径（wrapper 完成 cd）。flags：`--print/-p`（仅打印路径）、`--claude/-cc`（cd 后启动 Claude Code）、`--codex/-cdx`（cd 后启动 Codex）、`--tmux/-t`（tmux 新窗口打开）。Claude 与 Codex 不能同时使用；tmux 与编辑器参数同时出现时 tmux 优先。无 query 时弹全量选择列表 |
-| `zhao init <shell>`   | 输出对应 shell 的 wrapper 函数文本。仅支持 zsh、bash，其他值报错并列出支持项                                                                                                                                                               |
-| `zhao setup`          | 安装 wrapper：检测当前 shell 与 rc 文件 → **查重**（已存在则跳过，幂等）→ 展示将写入内容 → 确认后追加 `eval "$(zhao init zsh)"` → **打印改动的文件与内容**。rc 文件为符号链接时警告（dotfiles 场景）并需再次确认                           |
-| `zhao scan`           | 见 4.1。clack spinner 展示进度                                                                                                                                                                                                             |
-| `zhao browse [query]` | resolveProject → remote 转 web URL（处理 SSH/HTTPS 两种格式，去 `.git` 后缀）→ `open` 打开浏览器。flags：`--copy`（复制 URL 到剪贴板）、`--print`。检测到无图形环境（如 SSH session）自动降级为打印 URL。拒绝多余参数（防止误当 git 透传） |
-| `zhao list`           | 列出全部项目（名称、路径、描述）。`--json` 输出合并后的完整数据供管道/调试                                                                                                                                                                 |
+| 命令                  | 规格                                                                                                                                                                                                                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `zhao <query>`        | 核心检索。resolveProject → 输出路径（wrapper 完成 cd）。flags：`--print/-p`（仅打印路径）、`--claude/-cc`（cd 后启动 Claude Code）、`--codex/-cdx`（cd 后启动 Codex）、`--tmux/-t`（在 tmux 内打开新窗口，外部调用时创建并进入新会话）。Claude 与 Codex 不能同时使用；tmux 与编辑器参数同时出现时 tmux 优先。无 query 时弹全量选择列表 |
+| `zhao init <shell>`   | 输出对应 shell 的 wrapper 函数文本。仅支持 zsh、bash，其他值报错并列出支持项                                                                                                                                                                                                                                                           |
+| `zhao setup`          | 安装 wrapper：检测当前 shell 与 rc 文件 → **查重**（已存在则跳过，幂等）→ 展示将写入内容 → 确认后追加 `eval "$(zhao init zsh)"` → **打印改动的文件与内容**。rc 文件为符号链接时警告（dotfiles 场景）并需再次确认                                                                                                                       |
+| `zhao scan`           | 见 4.1。clack spinner 展示进度                                                                                                                                                                                                                                                                                                         |
+| `zhao browse [query]` | resolveProject → remote 转 web URL（处理 SSH/HTTPS 两种格式，去 `.git` 后缀）→ `open` 打开浏览器。flags：`--copy`（复制 URL 到剪贴板）、`--print`。检测到无图形环境（如 SSH session）自动降级为打印 URL。拒绝多余参数（防止误当 git 透传）                                                                                             |
+| `zhao list`           | 列出全部项目（名称、路径、描述）。`--json` 输出合并后的完整数据供管道/调试                                                                                                                                                                                                                                                             |
 
 ### v2（第二阶段）
 

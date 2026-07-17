@@ -79,13 +79,14 @@ describe('shell wrapper', () => {
     await mkdir(projectDirectory, { recursive: true })
     await writeFile(callLog, '')
 
-    const runWrapper = (command: string) =>
+    const runWrapper = (command: string, tmux = '') =>
       spawnSync(shell, ['-c', `${getShellWrapper(shell)}\n${command}`], {
         cwd: directory,
         encoding: 'utf8',
         env: {
           ...process.env,
           PATH: `${binDirectory}:${process.env.PATH ?? ''}`,
+          TMUX: tmux,
           ZHAO_TEST_PROJECT: projectDirectory,
           ZHAO_TEST_LOG: callLog,
         },
@@ -170,11 +171,11 @@ describe('shell wrapper', () => {
 
       expect(result).toMatchObject({
         status: 0,
-        stdout: `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        stdout: `tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
         stderr: '',
       })
       expect(await getCalls()).toBe(
-        `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `${zhaoCall}tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
       )
     }
 
@@ -201,13 +202,13 @@ describe('shell wrapper', () => {
       ],
       [
         '-t --tmux',
-        `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
-        `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `${zhaoCall}tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
       ],
       [
         '--tmux -t',
-        `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
-        `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `${zhaoCall}tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
       ],
       ['-p --print', `${projectDirectory}\n`, zhaoCall],
       ['--print -p', `${projectDirectory}\n`, zhaoCall],
@@ -222,6 +223,20 @@ describe('shell wrapper', () => {
       })
       expect(await getCalls()).toBe(expectedCalls)
     }
+
+    await resetCalls()
+    const insideTmux = runWrapper(
+      `zhao "${query}" -t`,
+      '/private/tmp/tmux-test/default,1,0',
+    )
+    expect(insideTmux).toMatchObject({
+      status: 0,
+      stdout: `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+      stderr: '',
+    })
+    expect(await getCalls()).toBe(
+      `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+    )
 
     await resetCalls()
     const conflict = runWrapper(`zhao "${query}" -cc --codex`)

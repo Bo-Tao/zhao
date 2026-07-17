@@ -45,7 +45,11 @@ zhao() {
   fi
 
   if [[ "$use_tmux" -eq 1 ]]; then
-    tmux new-window -c "$dir"
+    if [[ -n "$TMUX" ]]; then
+      tmux new-window -c "$dir"
+    else
+      tmux new-session -c "$dir"
+    fi
     return
   fi
 
@@ -101,7 +105,11 @@ zhao() {
   fi
 
   if [[ "$use_tmux" -eq 1 ]]; then
-    tmux new-window -c "$dir"
+    if [[ -n "$TMUX" ]]; then
+      tmux new-window -c "$dir"
+    else
+      tmux new-session -c "$dir"
+    fi
     return
   fi
 
