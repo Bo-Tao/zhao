@@ -45,10 +45,16 @@ zhao() {
   fi
 
   if [[ "$use_tmux" -eq 1 ]]; then
+    local -a tmux_args=()
+    if [[ "$use_claude" -eq 1 ]]; then
+      tmux_args=(claude)
+    elif [[ "$use_codex" -eq 1 ]]; then
+      tmux_args=(codex)
+    fi
     if [[ -n "$TMUX" ]]; then
-      tmux new-window -c "$dir"
+      tmux new-window -c "$dir" "\${tmux_args[@]}"
     else
-      tmux new-session -c "$dir"
+      tmux new-session -c "$dir" "\${tmux_args[@]}"
     fi
     return
   fi
@@ -105,10 +111,16 @@ zhao() {
   fi
 
   if [[ "$use_tmux" -eq 1 ]]; then
+    local -a tmux_args=()
+    if [[ "$use_claude" -eq 1 ]]; then
+      tmux_args=(claude)
+    elif [[ "$use_codex" -eq 1 ]]; then
+      tmux_args=(codex)
+    fi
     if [[ -n "$TMUX" ]]; then
-      tmux new-window -c "$dir"
+      tmux new-window -c "$dir" "\${tmux_args[@]}"
     else
-      tmux new-session -c "$dir"
+      tmux new-session -c "$dir" "\${tmux_args[@]}"
     fi
     return
   fi

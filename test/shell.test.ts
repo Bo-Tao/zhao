@@ -165,17 +165,20 @@ describe('shell wrapper', () => {
       )
     }
 
-    for (const flags of ['-cc --tmux', '--tmux -cdx']) {
+    for (const [flags, editor] of [
+      ['-cc --tmux', 'claude'],
+      ['--tmux -cdx', 'codex'],
+    ]) {
       await resetCalls()
       const result = runWrapper(`zhao "${query}" ${flags}`)
 
       expect(result).toMatchObject({
         status: 0,
-        stdout: `tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        stdout: `tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\ntmux:[${editor}]\n`,
         stderr: '',
       })
       expect(await getCalls()).toBe(
-        `${zhaoCall}tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+        `${zhaoCall}tmux:[new-session]\ntmux:[-c]\ntmux:[${projectDirectory}]\ntmux:[${editor}]\n`,
       )
     }
 
@@ -226,16 +229,16 @@ describe('shell wrapper', () => {
 
     await resetCalls()
     const insideTmux = runWrapper(
-      `zhao "${query}" -t`,
+      `zhao "${query}" -t -cc`,
       '/private/tmp/tmux-test/default,1,0',
     )
     expect(insideTmux).toMatchObject({
       status: 0,
-      stdout: `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+      stdout: `tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\ntmux:[claude]\n`,
       stderr: '',
     })
     expect(await getCalls()).toBe(
-      `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\n`,
+      `${zhaoCall}tmux:[new-window]\ntmux:[-c]\ntmux:[${projectDirectory}]\ntmux:[claude]\n`,
     )
 
     await resetCalls()
