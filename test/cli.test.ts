@@ -1,11 +1,11 @@
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { runCittyCli } from '../src/cli.js'
+import { buildCli } from './helpers/build-cli.js'
 
 const captureStdout = async (rawArgs: string[]): Promise<string> => {
   let output = ''
@@ -54,12 +54,7 @@ describe('CLI 元信息输出', () => {
 
 describe('构建产物入口', () => {
   it('Claude 与 Codex 冲突在 onboarding 前以参数错误退出', () => {
-    const projectRoot = fileURLToPath(new URL('../', import.meta.url))
-    const build = spawnSync('pnpm', ['build'], {
-      cwd: projectRoot,
-      encoding: 'utf8',
-    })
-    const entry = join(projectRoot, 'dist', 'index.mjs')
+    const { entry, result: build } = buildCli()
     const missingHome = join(
       tmpdir(),
       `zhao-missing-home-${process.pid}-${Date.now()}`,

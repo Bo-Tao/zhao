@@ -2,13 +2,14 @@ import { spawnSync } from 'node:child_process'
 import { cp, mkdtemp, readFile, rename } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
 
+import { buildCli } from './helpers/build-cli.js'
+
 describe('v2 构建产物', () => {
   it('贯通 ci、tag、info、edit、config 与 doctor', async () => {
-    const projectRoot = fileURLToPath(new URL('../', import.meta.url))
+    const { entry, projectRoot, result: build } = buildCli()
     const configDirectory = await mkdtemp(join(tmpdir(), 'zhao-v2-cli-'))
     const ciTestUrl =
       'https://cloud-test.tal.com/k8s-fe/appManage/appManageCenter/appDetail/imageManage?id=2827251'
@@ -25,27 +26,19 @@ describe('v2 构建产物', () => {
       join(configDirectory, 'projects.yaml'),
       join(configDirectory, 'projects.yml'),
     )
-    const build = spawnSync('pnpm', ['build'], {
-      cwd: projectRoot,
-      encoding: 'utf8',
-    })
     expect(build.status).toBe(0)
 
     const run = (args: string[], extraEnv: NodeJS.ProcessEnv = {}) =>
-      spawnSync(
-        process.execPath,
-        [join(projectRoot, 'dist/index.mjs'), ...args],
-        {
-          cwd: projectRoot,
-          encoding: 'utf8',
-          env: {
-            ...process.env,
-            ZHAO_CONFIG_DIR: configDirectory,
-            ZHAO_SHELL_WRAPPED: '1',
-            ...extraEnv,
-          },
+      spawnSync(process.execPath, [entry, ...args], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          ZHAO_CONFIG_DIR: configDirectory,
+          ZHAO_SHELL_WRAPPED: '1',
+          ...extraEnv,
         },
-      )
+      })
 
     expect(
       run([

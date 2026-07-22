@@ -23,12 +23,14 @@
 ### Task 1: Node 参数别名、Codex 标记与冲突校验
 
 **Files:**
+
 - Modify: `src/core/search-args.ts:1-40`
 - Modify: `src/cli.ts:8-42`
 - Modify: `test/search-args.test.ts:6-31`
 - Modify: `test/cli.test.ts:21-45`
 
 **Interfaces:**
+
 - Consumes: `parseSearchArgs(rawArgs: string[]): SearchArgs` 与 citty 根命令的 `searchArgs` 定义。
 - Produces: `SearchArgs` 新增 `codex: boolean`；四组长短参数在直接 Node 调用和帮助页中保持一致。
 
@@ -37,28 +39,28 @@
 将 `test/search-args.test.ts` 的现有期望补上 `codex: false`，并增加：
 
 ```ts
-it("长短参数具有相同行为", () => {
-  expect(parseSearchArgs(["-p", "报告", "-cc", "-t"])).toEqual({
-    query: "报告",
+it('长短参数具有相同行为', () => {
+  expect(parseSearchArgs(['-p', '报告', '-cc', '-t'])).toEqual({
+    query: '报告',
     print: true,
     claude: true,
     codex: false,
     tmux: true,
-  });
-  expect(parseSearchArgs(["项目", "-cdx"])).toEqual({
-    query: "项目",
+  })
+  expect(parseSearchArgs(['项目', '-cdx'])).toEqual({
+    query: '项目',
     print: false,
     claude: false,
     codex: true,
     tmux: false,
-  });
-});
+  })
+})
 
-it("拒绝同时启动 Claude 和 Codex", () => {
-  expect(() => parseSearchArgs(["项目", "--claude", "-cdx"])).toThrow(
-    "--claude/-cc 与 --codex/-cdx 不能同时使用",
-  );
-});
+it('拒绝同时启动 Claude 和 Codex', () => {
+  expect(() => parseSearchArgs(['项目', '--claude', '-cdx'])).toThrow(
+    '--claude/-cc 与 --codex/-cdx 不能同时使用',
+  )
+})
 ```
 
 - [ ] **Step 2: 运行参数测试并确认红灯**
@@ -72,10 +74,10 @@ Expected: FAIL，原因是 `-p` 仍为未知参数且 `SearchArgs` 没有 `codex
 在 `test/cli.test.ts` 的帮助测试中增加：
 
 ```ts
-expect(output).toContain("`-p, --print`");
-expect(output).toContain("`-cc, --claude`");
-expect(output).toContain("`-cdx, --codex`");
-expect(output).toContain("`-t, --tmux`");
+expect(output).toContain('`-p, --print`')
+expect(output).toContain('`-cc, --claude`')
+expect(output).toContain('`-cdx, --codex`')
+expect(output).toContain('`-t, --tmux`')
 ```
 
 - [ ] **Step 4: 运行帮助测试并确认红灯**
@@ -90,11 +92,11 @@ Expected: FAIL，帮助输出中不存在短参数和 Codex 选项。
 
 ```ts
 export interface SearchArgs {
-  query?: string;
-  print: boolean;
-  claude: boolean;
-  codex: boolean;
-  tmux: boolean;
+  query?: string
+  print: boolean
+  claude: boolean
+  codex: boolean
+  tmux: boolean
 }
 
 const result: SearchArgs = {
@@ -103,16 +105,16 @@ const result: SearchArgs = {
   claude: false,
   codex: false,
   tmux: false,
-};
+}
 
-if (argument === "--print" || argument === "-p") {
-  result.print = true;
-} else if (argument === "--claude" || argument === "-cc") {
-  result.claude = true;
-} else if (argument === "--codex" || argument === "-cdx") {
-  result.codex = true;
-} else if (argument === "--tmux" || argument === "-t") {
-  result.tmux = true;
+if (argument === '--print' || argument === '-p') {
+  result.print = true
+} else if (argument === '--claude' || argument === '-cc') {
+  result.claude = true
+} else if (argument === '--codex' || argument === '-cdx') {
+  result.codex = true
+} else if (argument === '--tmux' || argument === '-t') {
+  result.tmux = true
 }
 ```
 
@@ -120,7 +122,7 @@ if (argument === "--print" || argument === "-p") {
 
 ```ts
 if (result.claude && result.codex) {
-  throw new Error("--claude/-cc 与 --codex/-cdx 不能同时使用。");
+  throw new Error('--claude/-cc 与 --codex/-cdx 不能同时使用。')
 }
 ```
 
@@ -173,10 +175,12 @@ git commit -m "feat(cli): add option aliases and Codex flag"
 ### Task 2: Shell wrapper 动作与真实 Shell 验证
 
 **Files:**
+
 - Modify: `src/shell/templates.ts:3-92`
 - Modify: `test/shell.test.ts:15-105`
 
 **Interfaces:**
+
 - Consumes: Node CLI 的纯路径协议 `command zhao --print <query>`。
 - Produces: zsh/bash 中一致的 `-p/-cc/-cdx/-t` 后处理行为，并输出明确的 Claude/Codex 冲突错误。
 
@@ -188,11 +192,11 @@ git commit -m "feat(cli): add option aliases and Codex flag"
 const directory = join(
   tmpdir(),
   `zhao-actions-${shell}-${process.pid}-${Date.now()}`,
-);
-const binDirectory = join(directory, "bin");
-const projectDirectory = join(directory, "project");
-await mkdir(binDirectory, { recursive: true });
-await mkdir(projectDirectory, { recursive: true });
+)
+const binDirectory = join(directory, 'bin')
+const projectDirectory = join(directory, 'project')
+await mkdir(binDirectory, { recursive: true })
+await mkdir(projectDirectory, { recursive: true })
 
 const runWrapper = (
   shell: string,
@@ -201,39 +205,39 @@ const runWrapper = (
   binDirectory: string,
   projectDirectory: string,
 ) =>
-  spawnSync(shell, ["-c", `${getShellWrapper(shell)}\n${command}`], {
+  spawnSync(shell, ['-c', `${getShellWrapper(shell)}\n${command}`], {
     cwd: directory,
-    encoding: "utf8",
+    encoding: 'utf8',
     env: {
       ...process.env,
-      PATH: `${binDirectory}:${process.env.PATH ?? ""}`,
+      PATH: `${binDirectory}:${process.env.PATH ?? ''}`,
       ZHAO_TEST_PROJECT: projectDirectory,
     },
-  });
+  })
 
 await writeFile(
-  join(binDirectory, "zhao"),
+  join(binDirectory, 'zhao'),
   '#!/bin/sh\nprintf "%s\\n" "$ZHAO_TEST_PROJECT"\n',
   { mode: 0o755 },
-);
-for (const editor of ["claude", "codex"]) {
+)
+for (const editor of ['claude', 'codex']) {
   await writeFile(
     join(binDirectory, editor),
     `#!/bin/sh\nprintf "${editor}:%s\\n" "$PWD"\n`,
     { mode: 0o755 },
-  );
+  )
 }
 await writeFile(
-  join(binDirectory, "tmux"),
+  join(binDirectory, 'tmux'),
   '#!/bin/sh\nprintf "tmux:%s\\n" "$*"\n',
   { mode: 0o755 },
-);
+)
 ```
 
 对每种 shell 断言：
 
 ```ts
-for (const flag of ["-p", "--print"]) {
+for (const flag of ['-p', '--print']) {
   expect(
     runWrapper(
       shell,
@@ -245,32 +249,30 @@ for (const flag of ["-p", "--print"]) {
   ).toMatchObject({
     status: 0,
     stdout: `${projectDirectory}\n`,
-    stderr: "",
-  });
+    stderr: '',
+  })
 }
 expect(
-  runWrapper(shell, "zhao 项目 -cc", directory, binDirectory, projectDirectory)
+  runWrapper(shell, 'zhao 项目 -cc', directory, binDirectory, projectDirectory)
     .stdout,
-).toBe(`claude:${projectDirectory}\n`);
+).toBe(`claude:${projectDirectory}\n`)
 expect(
-  runWrapper(shell, "zhao 项目 -cdx", directory, binDirectory, projectDirectory)
+  runWrapper(shell, 'zhao 项目 -cdx', directory, binDirectory, projectDirectory)
     .stdout,
-).toBe(`codex:${projectDirectory}\n`);
+).toBe(`codex:${projectDirectory}\n`)
 expect(
-  runWrapper(shell, "zhao 项目 -t", directory, binDirectory, projectDirectory)
+  runWrapper(shell, 'zhao 项目 -t', directory, binDirectory, projectDirectory)
     .stdout,
-).toBe(`tmux:new-window -c ${projectDirectory}\n`);
+).toBe(`tmux:new-window -c ${projectDirectory}\n`)
 const conflict = runWrapper(
   shell,
-  "zhao 项目 -cc --codex",
+  'zhao 项目 -cc --codex',
   directory,
   binDirectory,
   projectDirectory,
-);
-expect(conflict.status).not.toBe(0);
-expect(conflict.stderr).toContain(
-  "--claude/-cc 与 --codex/-cdx 不能同时使用",
-);
+)
+expect(conflict.status).not.toBe(0)
+expect(conflict.stderr).toContain('--claude/-cc 与 --codex/-cdx 不能同时使用')
 ```
 
 - [ ] **Step 2: 运行 wrapper 测试并确认红灯**
@@ -399,10 +401,12 @@ git commit -m "feat(shell): launch projects with Codex"
 ### Task 3: 规格同步与完整回归
 
 **Files:**
+
 - Modify: `zhao-spec.md:34-56`
 - Modify: `zhao-spec.md:180-184`
 
 **Interfaces:**
+
 - Consumes: Task 1 和 Task 2 已验证的参数与 wrapper 行为。
 - Produces: 与最终 CLI 行为一致的项目规格和可发布构建证据。
 
