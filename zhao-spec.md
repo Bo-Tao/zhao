@@ -107,8 +107,6 @@ zhao() {
 | `state.json`    | frecency 使用记录（每次选中项目时更新）                | 程序维护，变更频繁                   |
 
 检索时四者在内存合并。合并优先级：projects.yaml 手动数据 > index.json 自动数据。
-启动时会将旧的 `config.yml` / `projects.yml` 一次性迁移为 `.yaml`；新旧文件
-同时存在且内容不同时报错，不自动覆盖任何用户配置。
 
 ### 3.3 index.json 数据结构
 

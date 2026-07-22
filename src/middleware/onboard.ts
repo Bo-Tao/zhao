@@ -6,7 +6,6 @@ import {
   getStorePaths,
   loadConfig,
   loadProjectsFile,
-  migrateLegacyYamlFiles,
   saveConfig,
   saveIndex,
 } from '../core/store.js'
@@ -135,11 +134,6 @@ export const ensureOnboarded = async (
     checkWrapper = true,
     scanAfterConfig = true,
   } = options
-
-  const migrationWarnings = await migrateLegacyYamlFiles()
-  for (const warning of migrationWarnings) {
-    process.stderr.write(`警告：${warning}\n`)
-  }
 
   if (
     checkWrapper &&

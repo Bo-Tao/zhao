@@ -28,25 +28,22 @@ History uses imperative subjects and Conventional Commit prefixes where useful, 
 
 ## Configuration & Safety
 
-Treat user configuration and project paths as untrusted input. Preserve `.yaml` migration behavior, avoid overwriting conflicting files, and never commit local Zhao configuration, registry credentials, or private repository URLs.
+Treat user configuration and project paths as untrusted input. Avoid overwriting conflicting files, and never commit local Zhao configuration, registry credentials, or private repository URLs.
 
 <claude-mem-context>
 # Memory Context
 
-# [zhao] recent context, 2026-07-22 5:12pm GMT+8
+# [zhao] recent context, 2026-07-22 5:34pm GMT+8
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (17,543t read) | 317,583t work | 94% savings
+Stats: 50 obs (17,505t read) | 319,365t work | 95% savings
 
 ### Jul 22, 2026
-3889 3:42p 🔵 tag command does not support configuring project links
-3890 " 🔵 Specification defines links field but not tag command configuration method
-3891 " 🟣 Added --ci-test and --ci-prod flags to tag command
-3892 3:43p 🔵 Format check failed on documentation files
-3893 " 🔵 Integration test failure in ci command after tag modifications
+
+3893 3:43p 🔵 Integration test failure in ci command after tag modifications
 3894 " 🟣 Feature implementation validated and build successful
 3895 " 🟣 CLI help output confirms new --ciTest and --ciProd flags functional
 3896 3:44p ✅ Enhanced integration test with actual URLs and ci command validation
@@ -93,6 +90,10 @@ S552 Complete v2 project management command implementation and commit changes (J
 3938 5:09p 🔵 Citty help output format changed between v0.1.6 and v0.2.2
 3939 " 🔵 TypeScript 7.0.2 and @clack/prompts 1.7.0 upgrade surfaced type errors
 3940 " 🔵 Main CLI help test still expects backtick format from old citty version
+3941 5:12p 🔵 `zhao ci` command lacks short aliases for --copy and --print flags
+3942 " 🟣 Added short aliases `-c` and `-p` to `zhao ci` command flags
+3943 5:30p ✅ Large-scale code changes committed across 9 files
+3944 5:32p 🔵 YAML migration logic added for unpublished project
 
-Access 318k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 319k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

@@ -6,7 +6,6 @@ import {
   getStorePaths,
   loadConfig,
   loadIndex,
-  migrateLegacyYamlFiles,
   type StorePaths,
 } from '../core/store.js'
 import type { DefineCommand } from './types.js'
@@ -45,23 +44,6 @@ export const runDoctorChecks = async (
   const now = options.now ?? new Date()
   const maxIndexAgeDays = options.maxIndexAgeDays ?? 7
   const checks: DoctorCheck[] = []
-
-  try {
-    const migrationWarnings = await migrateLegacyYamlFiles(paths)
-    if (migrationWarnings.length > 0) {
-      checks.push({
-        name: 'YAML 配置迁移',
-        status: 'warning',
-        detail: migrationWarnings.join('；'),
-      })
-    }
-  } catch (error) {
-    checks.push({
-      name: 'YAML 配置迁移',
-      status: 'fail',
-      detail: error instanceof Error ? error.message : String(error),
-    })
-  }
 
   checks.push({
     name: 'shell wrapper',

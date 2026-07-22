@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { cp, mkdtemp, readFile, rename } from 'node:fs/promises'
+import { cp, mkdtemp, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -18,14 +18,6 @@ describe('v2 构建产物', () => {
     await cp(join(projectRoot, 'test/fixtures/smoke-config'), configDirectory, {
       recursive: true,
     })
-    await rename(
-      join(configDirectory, 'config.yaml'),
-      join(configDirectory, 'config.yml'),
-    )
-    await rename(
-      join(configDirectory, 'projects.yaml'),
-      join(configDirectory, 'projects.yml'),
-    )
     expect(build.status).toBe(0)
 
     const run = (args: string[], extraEnv: NodeJS.ProcessEnv = {}) =>

@@ -1,17 +1,6 @@
-import { constants } from 'node:fs'
-import {
-  copyFile,
-  lstat,
-  mkdir,
-  readFile,
-  readlink,
-  rename,
-  symlink,
-  unlink,
-  writeFile,
-} from 'node:fs/promises'
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { basename, dirname, join } from 'node:path'
+import { dirname, join } from 'node:path'
 
 import type {
   MergedProject,
@@ -199,78 +188,6 @@ const readOptional = async (path: string): Promise<string | undefined> => {
     }
     throw error
   }
-}
-
-const migrateLegacyYamlFile = async (
-  legacyPath: string,
-  yamlPath: string,
-): Promise<string | undefined> => {
-  try {
-    const legacyStats = await lstat(legacyPath)
-    if (legacyStats.isSymbolicLink()) {
-      await symlink(await readlink(legacyPath), yamlPath)
-    } else {
-      await copyFile(legacyPath, yamlPath, constants.COPYFILE_EXCL)
-    }
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code
-    if (code === 'ENOENT') {
-      return
-    }
-    if (code !== 'EEXIST') {
-      throw error
-    }
-
-    let matches: boolean
-    try {
-      const [legacyStats, yamlStats] = await Promise.all([
-        lstat(legacyPath),
-        lstat(yamlPath),
-      ])
-      if (legacyStats.isSymbolicLink() || yamlStats.isSymbolicLink()) {
-        matches =
-          legacyStats.isSymbolicLink() &&
-          yamlStats.isSymbolicLink() &&
-          (await readlink(legacyPath)) === (await readlink(yamlPath))
-      } else {
-        const contents = await Promise.all([
-          readFile(legacyPath),
-          readFile(yamlPath),
-        ])
-        matches = contents[0].equals(contents[1])
-      }
-    } catch (readError) {
-      if ((readError as NodeJS.ErrnoException).code === 'ENOENT') {
-        return
-      }
-      throw readError
-    }
-    if (!matches) {
-      throw new Error(
-        `${basename(legacyPath)} 与 ${basename(yamlPath)} 同时存在且内容不同，请手动合并后删除旧文件。`,
-      )
-    }
-  }
-  try {
-    await unlink(legacyPath)
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-      return `${basename(yamlPath)} 已可用，但无法删除旧文件 ${basename(legacyPath)}：${String(error)}`
-    }
-  }
-}
-
-export const migrateLegacyYamlFiles = async (
-  paths = getStorePaths(),
-): Promise<string[]> => {
-  const warnings = await Promise.all([
-    migrateLegacyYamlFile(join(paths.directory, 'config.yml'), paths.config),
-    migrateLegacyYamlFile(
-      join(paths.directory, 'projects.yml'),
-      paths.projects,
-    ),
-  ])
-  return warnings.filter((warning): warning is string => warning !== undefined)
 }
 
 const atomicWrite = async (path: string, content: string): Promise<void> => {

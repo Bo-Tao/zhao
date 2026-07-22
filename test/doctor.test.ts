@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -49,34 +49,6 @@ describe('doctor 命令', () => {
           name: join(directory, 'missing'),
           status: 'fail',
         }),
-        expect.objectContaining({ name: 'Node.js', status: 'pass' }),
-      ]),
-    )
-  })
-
-  it('配置迁移冲突时继续运行其他诊断', async ({ task }) => {
-    const directory = join(
-      tmpdir(),
-      `zhao-doctor-conflict-${task.id}-${Date.now()}`,
-    )
-    const paths = getStorePaths(directory)
-    await mkdir(directory, { recursive: true })
-    await writeFile(paths.config, 'scanRoots: []\n')
-    await writeFile(join(directory, 'config.yml'), 'scanRoots: [legacy]\n')
-
-    const checks = await runDoctorChecks({
-      paths,
-      env: { ZHAO_SHELL_WRAPPED: '1' },
-      nodeVersion: '20.10.0',
-    })
-
-    expect(checks).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          name: 'YAML 配置迁移',
-          status: 'fail',
-        }),
-        expect.objectContaining({ name: 'config.yaml', status: 'pass' }),
         expect.objectContaining({ name: 'Node.js', status: 'pass' }),
       ]),
     )
