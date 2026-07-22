@@ -404,7 +404,7 @@ git.example.com/group/name:
 
 ## 常见问题
 
-### 执行 `zhao report` 后没有切换目录
+### 执行 `zhao <query>` 后没有切换目录
 
 shell wrapper 尚未生效。运行：
 
@@ -438,13 +438,7 @@ zhao scan
 为项目单独设置链接：
 
 ```bash
-zhao tag report --ci-test https://build.example.com/report/test
-```
-
-或者配置全局模板：
-
-```bash
-zhao config set ciTemplates.test 'https://build.example.com/{group}/{name}'
+zhao tag '学习报告' --ci-test https://build.example.com/group/name/test
 ```
 
 ### 在脚本中使用
@@ -452,9 +446,9 @@ zhao config set ciTemplates.test 'https://build.example.com/{group}/{name}'
 使用 `--print` 避免打开页面或切换目录：
 
 ```bash
-project_path="$(zhao report --print)"
-repository_url="$(zhao browse report --print)"
-ci_url="$(zhao ci prod report --print)"
+project_path="$(zhao '学习报告' --print)"
+repository_url="$(zhao browse '学习报告' --print)"
+ci_url="$(zhao ci prod '学习报告' --print)"
 ```
 
 ## 本地开发
@@ -462,12 +456,10 @@ ci_url="$(zhao ci prod report --print)"
 开发环境使用 Bun 直接运行 TypeScript，依赖管理使用 pnpm 11；发布产物由 tsdown 构建为 Node.js 18 兼容的 ESM 可执行文件。
 
 ```bash
-corepack enable
 pnpm install
 
 # 直接运行源码
-pnpm dev -- --help
-pnpm dev -- doctor
+pnpm dev
 
 # 构建 dist/index.mjs
 pnpm build
