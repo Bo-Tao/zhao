@@ -30,24 +30,36 @@ describe('CLI 元信息输出', () => {
 
   it('帮助表格的条目与说明分别左对齐', async () => {
     const output = await captureStdout(['-h'])
-    const detailLines = output
-      .split('\n')
-      .filter((line) => line.trimStart().startsWith('`'))
+    const labels = [
+      'QUERY',
+      '-p, --print',
+      '-cc, --claude',
+      '-cdx, --codex',
+      '-t, --tmux',
+      'init',
+      'setup',
+      'scan',
+      'browse',
+      'list',
+      'ci',
+      'tag',
+      'info',
+      'edit',
+      'config',
+      'doctor',
+    ]
+    const lines = output.split('\n')
+    const detailLines = labels.map((label) =>
+      lines.find((line) => line.startsWith(label)),
+    )
 
     expect(output).toContain('\nARGUMENTS\n')
     expect(output).toContain('\nOPTIONS\n')
     expect(output).toContain('\nCOMMANDS\n')
-    expect(output).toContain('`-p, --print`')
-    expect(output).toContain('`-cc, --claude`')
-    expect(output).toContain('`-cdx, --codex`')
-    expect(output).toContain('`-t, --tmux`')
-    for (const command of ['ci', 'tag', 'info', 'edit', 'config', 'doctor']) {
-      expect(output).toContain(`\`${command}\``)
-    }
     expect(detailLines).toHaveLength(16)
-    expect(detailLines.every((line) => line.startsWith('`'))).toBe(true)
+    expect(detailLines.every((line) => line !== undefined)).toBe(true)
     expect(
-      new Set(detailLines.map((line) => line.search(/[\u3400-\u9fff]/))).size,
+      new Set(detailLines.map((line) => line?.search(/[\u3400-\u9fff]/))).size,
     ).toBe(1)
   })
 

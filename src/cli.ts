@@ -41,7 +41,7 @@ const searchArgs = {
 const alignUsageColumns = (usage: string): string => {
   const rows = usage.split('\n')
   const details = rows.map((line) => {
-    const match = line.match(/^\s*(`[^`]+`)\s{2,}(.*)$/)
+    const match = line.match(/^\s*(\S(?:.*?\S)?)\s{4,}(\S.*)$/)
     return match
       ? { label: match[1] as string, description: (match[2] as string).trim() }
       : undefined
