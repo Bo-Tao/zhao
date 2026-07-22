@@ -10,6 +10,10 @@ describe('v2 构建产物', () => {
   it('贯通 ci、tag、info、edit、config 与 doctor', async () => {
     const projectRoot = fileURLToPath(new URL('../', import.meta.url))
     const configDirectory = await mkdtemp(join(tmpdir(), 'zhao-v2-cli-'))
+    const ciTestUrl =
+      'https://cloud-test.tal.com/k8s-fe/appManage/appManageCenter/appDetail/imageManage?id=2827251'
+    const ciProdUrl =
+      'https://cloud.tal.com/k8s-fe/appManage/appManageCenter/appDetail/imageManage?id=34905'
     await cp(join(projectRoot, 'test/fixtures/smoke-config'), configDirectory, {
       recursive: true,
     })
@@ -73,6 +77,10 @@ describe('v2 构建产物', () => {
         'dashboard',
         '--rm-domain',
         'api.report.100tal.com',
+        '--ci-test',
+        ciTestUrl,
+        '--ci-prod',
+        ciProdUrl,
       ]).status,
     ).toBe(0)
     const projectsFile = await readFile(
@@ -82,6 +90,16 @@ describe('v2 构建产物', () => {
     expect(projectsFile).toContain('报告站')
     expect(projectsFile).toContain('dashboard')
     expect(projectsFile).toContain('api.report.100tal.com')
+    expect(projectsFile).toContain(`ci-test: ${ciTestUrl}`)
+    expect(projectsFile).toContain(`ci-prod: ${ciProdUrl}`)
+    expect(run(['ci', 'test', '报告', '--print'])).toMatchObject({
+      status: 0,
+      stdout: `${ciTestUrl}\n`,
+    })
+    expect(run(['ci', 'prod', '报告', '--print'])).toMatchObject({
+      status: 0,
+      stdout: `${ciProdUrl}\n`,
+    })
 
     expect(run(['edit'], { EDITOR: 'true' }).status).toBe(0)
     const doctor = run(['doctor'])

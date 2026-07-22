@@ -12,6 +12,8 @@ type RawTagValue = string | string[] | undefined
 
 export interface ProjectTags {
   aliases: string[]
+  ciProd?: string
+  ciTest?: string
   domains: string[]
   keywords: string[]
   removedDomains: string[]
@@ -26,6 +28,11 @@ export const normalizeTagValues = (value: RawTagValue): string[] =>
       .map((item) => item.trim())
       .filter(Boolean),
   )
+
+const normalizeLinkValue = (value: RawTagValue): string | undefined => {
+  const lastValue = Array.isArray(value) ? value.at(-1) : value
+  return lastValue?.trim() || undefined
+}
 
 export const applyProjectTags = (
   current: ManualProjectData,
@@ -56,6 +63,15 @@ export const applyProjectTags = (
       ...tags.removedDomains,
     ])
   }
+  if (tags.ciTest !== undefined || tags.ciProd !== undefined) {
+    result.links = { ...current.links }
+    if (tags.ciTest !== undefined) {
+      result.links['ci-test'] = tags.ciTest
+    }
+    if (tags.ciProd !== undefined) {
+      result.links['ci-prod'] = tags.ciProd
+    }
+  }
   return result
 }
 
@@ -63,7 +79,7 @@ export default (defineCommand: DefineCommand) =>
   defineCommand({
     meta: {
       name: 'tag',
-      description: '为项目录入别名、域名和关键词',
+      description: '为项目录入别名、域名、关键词和 CI 链接',
     },
     args: {
       project: {
@@ -87,17 +103,34 @@ export default (defineCommand: DefineCommand) =>
         type: 'string',
         description: '拉黑自动扫描域名，可重复或用逗号分隔',
       },
+      ciTest: {
+        type: 'string',
+        description: '设置测试环境 CI 链接',
+      },
+      ciProd: {
+        type: 'string',
+        description: '设置生产环境 CI 链接',
+      },
     },
     async run({ args }) {
       const tags: ProjectTags = {
         aliases: normalizeTagValues(args.alias as RawTagValue),
+        ciProd: normalizeLinkValue(args.ciProd as RawTagValue),
+        ciTest: normalizeLinkValue(args.ciTest as RawTagValue),
         domains: normalizeTagValues(args.domain as RawTagValue),
         keywords: normalizeTagValues(args.kw as RawTagValue),
         removedDomains: normalizeTagValues(args.rmDomain as RawTagValue),
       }
-      if (Object.values(tags).every((values) => values.length === 0)) {
+      if (
+        tags.aliases.length === 0 &&
+        tags.domains.length === 0 &&
+        tags.keywords.length === 0 &&
+        tags.removedDomains.length === 0 &&
+        tags.ciTest === undefined &&
+        tags.ciProd === undefined
+      ) {
         throw new Error(
-          '请至少提供 --domain、--kw、--alias 或 --rm-domain 中的一项。',
+          '请至少提供 --domain、--kw、--alias、--rm-domain、--ci-test 或 --ci-prod 中的一项。',
         )
       }
 

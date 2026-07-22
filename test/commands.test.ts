@@ -124,10 +124,13 @@ describe('tag 命令', () => {
           aliases: ['旧别名'],
           domains: [{ value: 'old.example.com', type: 'page' }],
           keywords: ['旧关键词'],
+          links: { docs: 'https://docs.example.com' },
           blockedDomains: ['old-blocked.example.com'],
         },
         {
           aliases: ['新别名', '旧别名'],
+          ciProd: 'https://cloud.example.com/prod?id=2',
+          ciTest: 'https://cloud.example.com/test?id=1',
           domains: ['app.example.com'],
           keywords: ['新关键词'],
           removedDomains: ['api.example.com'],
@@ -140,7 +143,41 @@ describe('tag 命令', () => {
         { value: 'app.example.com', type: 'page' },
       ],
       keywords: ['旧关键词', '新关键词'],
+      links: {
+        docs: 'https://docs.example.com',
+        'ci-test': 'https://cloud.example.com/test?id=1',
+        'ci-prod': 'https://cloud.example.com/prod?id=2',
+      },
       blockedDomains: ['old-blocked.example.com', 'api.example.com'],
+    })
+  })
+
+  it('只设置 CI 链接时保留其他手动元数据和已有链接', () => {
+    expect(
+      applyProjectTags(
+        {
+          aliases: ['报告'],
+          links: {
+            docs: 'https://docs.example.com',
+            'ci-test': 'https://cloud.example.com/old-test',
+          },
+        },
+        {
+          aliases: [],
+          ciProd: 'https://cloud.example.com/prod',
+          ciTest: 'https://cloud.example.com/new-test',
+          domains: [],
+          keywords: [],
+          removedDomains: [],
+        },
+      ),
+    ).toEqual({
+      aliases: ['报告'],
+      links: {
+        docs: 'https://docs.example.com',
+        'ci-test': 'https://cloud.example.com/new-test',
+        'ci-prod': 'https://cloud.example.com/prod',
+      },
     })
   })
 })
