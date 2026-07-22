@@ -55,7 +55,7 @@ const alignUsageColumns = (usage: string): string => {
     .map((line, index) => {
       const detail = details[index]
       return detail
-        ? `${detail.label.padEnd(labelWidth)}  ${detail.description}`
+        ? `  ${detail.label.padEnd(labelWidth)}  ${detail.description}`
         : line
     })
     .join('\n')

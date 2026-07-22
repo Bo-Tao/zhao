@@ -50,7 +50,7 @@ describe('CLI 元信息输出', () => {
     ]
     const lines = output.split('\n')
     const detailLines = labels.map((label) =>
-      lines.find((line) => line.startsWith(label)),
+      lines.find((line) => line.startsWith(`  ${label}`)),
     )
 
     expect(output).toContain('\nARGUMENTS\n')
