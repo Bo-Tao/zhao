@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { cp, mkdtemp, readFile } from 'node:fs/promises'
+import { cp, mkdtemp, readFile, rename } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -13,6 +13,14 @@ describe('v2 构建产物', () => {
     await cp(join(projectRoot, 'test/fixtures/smoke-config'), configDirectory, {
       recursive: true,
     })
+    await rename(
+      join(configDirectory, 'config.yaml'),
+      join(configDirectory, 'config.yml'),
+    )
+    await rename(
+      join(configDirectory, 'projects.yaml'),
+      join(configDirectory, 'projects.yml'),
+    )
     const build = spawnSync('pnpm', ['build'], {
       cwd: projectRoot,
       encoding: 'utf8',
@@ -68,7 +76,7 @@ describe('v2 构建产物', () => {
       ]).status,
     ).toBe(0)
     const projectsFile = await readFile(
-      join(configDirectory, 'projects.yml'),
+      join(configDirectory, 'projects.yaml'),
       'utf8',
     )
     expect(projectsFile).toContain('报告站')

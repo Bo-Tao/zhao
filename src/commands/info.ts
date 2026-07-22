@@ -80,7 +80,7 @@ export default (defineCommand: DefineCommand) =>
         loadConfig(getStorePaths()),
       ])
       if (!config) {
-        throw new Error('config.yml 不存在，请先运行 zhao 完成首次配置。')
+        throw new Error('config.yaml 不存在，请先运行 zhao 完成首次配置。')
       }
       process.stdout.write(formatProjectInfo(project, config))
     },

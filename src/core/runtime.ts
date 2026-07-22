@@ -19,7 +19,7 @@ export const resolveStoredProject = async (
     loadMergedProjects(paths),
   ])
   if (!preferences) {
-    throw new Error('config.yml 不存在，请先运行 zhao 完成首次配置。')
+    throw new Error('config.yaml 不存在，请先运行 zhao 完成首次配置。')
   }
   if (loaded.indexIssue) {
     throw new Error(`${loaded.indexIssue}，请运行 zhao scan 重建。`)

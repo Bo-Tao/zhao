@@ -6,6 +6,7 @@ import {
   getStorePaths,
   loadConfig,
   loadProjectsFile,
+  migrateLegacyYamlFiles,
   saveConfig,
   saveIndex,
 } from '../core/store.js'
@@ -68,7 +69,7 @@ export const scanAndSave = async (): Promise<number> => {
     loadProjectsFile(paths),
   ])
   if (!config) {
-    throw new Error('config.yml 不存在，请先完成首次配置。')
+    throw new Error('config.yaml 不存在，请先完成首次配置。')
   }
   const progress = await createSpinner()
   progress.start('正在发现 Git 仓库')
@@ -134,6 +135,11 @@ export const ensureOnboarded = async (
     checkWrapper = true,
     scanAfterConfig = true,
   } = options
+
+  const migrationWarnings = await migrateLegacyYamlFiles()
+  for (const warning of migrationWarnings) {
+    process.stderr.write(`警告：${warning}\n`)
+  }
 
   if (
     checkWrapper &&

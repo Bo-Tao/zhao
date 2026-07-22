@@ -99,14 +99,16 @@ zhao() {
 
 ### 3.2 四个数据文件（`~/.config/zhao/`）
 
-| 文件           | 内容                                                   | 性质                                 |
-| -------------- | ------------------------------------------------------ | ------------------------------------ |
-| `config.yml`   | 扫描根目录列表、ci URL 模板、fzf 开关等用户配置        | 用户维护                             |
-| `index.json`   | `zhao scan` 生成的项目索引                             | **随时可删可重建，不含任何手工数据** |
-| `projects.yml` | 手动元数据层：alias、域名、关键词、links、域名拉黑名单 | 用户/团队维护，未来通过 git 仓库共享 |
-| `state.json`   | frecency 使用记录（每次选中项目时更新）                | 程序维护，变更频繁                   |
+| 文件            | 内容                                                   | 性质                                 |
+| --------------- | ------------------------------------------------------ | ------------------------------------ |
+| `config.yaml`   | 扫描根目录列表、ci URL 模板、fzf 开关等用户配置        | 用户维护                             |
+| `index.json`    | `zhao scan` 生成的项目索引                             | **随时可删可重建，不含任何手工数据** |
+| `projects.yaml` | 手动元数据层：alias、域名、关键词、links、域名拉黑名单 | 用户/团队维护，未来通过 git 仓库共享 |
+| `state.json`    | frecency 使用记录（每次选中项目时更新）                | 程序维护，变更频繁                   |
 
-检索时四者在内存合并。合并优先级：projects.yml 手动数据 > index.json 自动数据。
+检索时四者在内存合并。合并优先级：projects.yaml 手动数据 > index.json 自动数据。
+启动时会将旧的 `config.yml` / `projects.yml` 一次性迁移为 `.yaml`；新旧文件
+同时存在且内容不同时报错，不自动覆盖任何用户配置。
 
 ### 3.3 index.json 数据结构
 
@@ -138,9 +140,9 @@ zhao() {
 }
 ```
 
-**ID 用 remote 路径而非本地路径**：项目挪目录、团队成员 clone 到不同位置时，projects.yml 中的手动元数据仍能对应。
+**ID 用 remote 路径而非本地路径**：项目挪目录、团队成员 clone 到不同位置时，projects.yaml 中的手动元数据仍能对应。
 
-### 3.4 projects.yml 数据结构
+### 3.4 projects.yaml 数据结构
 
 ```yaml
 git.100tal.com/bigclass_xuefu_fe/tal-npm:
@@ -156,17 +158,21 @@ git.100tal.com/bigclass_xuefu_fe/tal-npm:
     - cdn.100tal.com
 ```
 
-### 3.5 config.yml 数据结构
+### 3.5 config.yaml 数据结构
 
 ```yaml
 scanRoots:
   - ~/work/fe
   - ~/work/mobile
-ciTemplates: # 模板优先，projects.yml links 逐项目覆盖
+ciTemplates: # projects.yaml links 逐项目覆盖全局模板
   test: 'https://build.100tal.com/{group}/{name}?env=test'
   prod: 'https://build.100tal.com/{group}/{name}?env=prod'
 useFzf: false # true 且检测到 fzf 时委托 fzf 做选择器
 ```
+
+CI 模板当前只支持 `{group}` 和 `{name}` 两个变量。`group` 来自 Git remote
+仓库路径去掉最后一段后的分组路径；`name` 优先来自 `package.json` 的 `name`
+字段，缺失时使用本地项目目录名。模板只做字面替换，不进行 URL 编码。
 
 ## 4. 核心逻辑
 
@@ -211,7 +217,7 @@ useFzf: false # true 且检测到 fzf 时委托 fzf 做选择器
 所有命令入口的前置检查，两项独立：
 
 1. wrapper 未生效（检测 `ZHAO_SHell_WRAPPED` 环境标记）→ 询问"现在运行 setup 吗？"
-2. config.yml 不存在 → clack 引导输入扫描根目录（可多个）→ 写 config → 立即扫描 → 报告"已索引 N 个项目"
+2. config.yaml 不存在 → clack 引导输入扫描根目录（可多个）→ 写 config → 立即扫描 → 报告"已索引 N 个项目"
 
 `doctor` 复用这两个检测函数。目标：新人只需记住 `zhao` 一个词，零文档上手。
 
@@ -230,22 +236,22 @@ useFzf: false # true 且检测到 fzf 时委托 fzf 做选择器
 
 ### v2（第二阶段）
 
-| 命令                           | 规格                                                                                                                                                                                                                                                        |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `zhao ci [test\|prod] [query]` | 打开构建平台。参数消歧：首个位置参数 ∈ {test, prod} 则为环境，否则视为 query；环境默认 test。URL 解析：projects.yml links（`ci-test`/`ci-prod`）优先 → ciTemplates 模板填充 `{group}`/`{name}` 兜底 → 都没有则报错并提示配置方法。flags 与降级行为同 browse |
-| `zhao tag <project>`           | 手动元数据录入："检索失败即录入"的入口。flags：`--domain`、`--kw`、`--alias`（均可多值）、`--rm-domain`（写入 blockedDomains）。project 参数支持模糊匹配 + 多命中选择                                                                                       |
-| `zhao info <project>`          | 展示单项目合并后的全部元数据，逐项标注来源（自动扫描/手动/模板/猜测）                                                                                                                                                                                       |
-| `zhao edit`                    | 用 `$EDITOR` 打开 projects.yml                                                                                                                                                                                                                              |
-| `zhao config`                  | `get <key>` / `set <key> <value>` / 无参时用 `$EDITOR` 打开 config.yml                                                                                                                                                                                      |
-| `zhao doctor`                  | 自检：wrapper 是否生效、config 与索引是否存在、索引新鲜度（超过 N 天提示重扫）、scanRoots 是否存在、Node 版本                                                                                                                                               |
+| 命令                           | 规格                                                                                                                                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `zhao ci [test\|prod] [query]` | 打开构建平台。参数消歧：首个位置参数 ∈ {test, prod} 则为环境，否则视为 query；环境默认 test。URL 解析：projects.yaml links（`ci-test`/`ci-prod`）优先 → ciTemplates 模板填充 `{group}`/`{name}` 兜底 → 都没有则报错并提示配置方法。flags 与降级行为同 browse |
+| `zhao tag <project>`           | 手动元数据录入："检索失败即录入"的入口。flags：`--domain`、`--kw`、`--alias`（均可多值）、`--rm-domain`（写入 blockedDomains）。project 参数支持模糊匹配 + 多命中选择                                                                                        |
+| `zhao info <project>`          | 展示单项目合并后的全部元数据，逐项标注来源（自动扫描/手动/模板/猜测）                                                                                                                                                                                        |
+| `zhao edit`                    | 用 `$EDITOR` 打开 projects.yaml                                                                                                                                                                                                                              |
+| `zhao config`                  | `get <key>` / `set <key> <value>` / 无参时用 `$EDITOR` 打开 config.yaml                                                                                                                                                                                      |
+| `zhao doctor`                  | 自检：wrapper 是否生效、config 与索引是否存在、索引新鲜度（超过 N 天提示重扫）、scanRoots 是否存在、Node 版本                                                                                                                                                |
 
 ### 后期（本次不实现，但架构需为其留位）
 
-| 命令                | 说明                                                                                                           |
-| ------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `zhao open <alias>` | 打开 projects.yml links 中任意别名链接（log/monitor/page…）。**顶级命令准入线：仅 browse/ci，其余一律走 open** |
-| `zhao sync`         | 从共享 git 仓库拉取合并 projects.yml（团队协作）                                                               |
-| `zhao scan --ai`    | 对无描述仓库 headless 调 `claude -p` 生成摘要与关键词写回                                                      |
+| 命令                | 说明                                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `zhao open <alias>` | 打开 projects.yaml links 中任意别名链接（log/monitor/page…）。**顶级命令准入线：仅 browse/ci，其余一律走 open** |
+| `zhao sync`         | 从共享 git 仓库拉取合并 projects.yaml（团队协作）                                                               |
+| `zhao scan --ai`    | 对无描述仓库 headless 调 `claude -p` 生成摘要与关键词写回                                                       |
 
 ## 6. 项目结构建议
 

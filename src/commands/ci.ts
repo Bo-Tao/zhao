@@ -43,7 +43,7 @@ export const resolveCiUrl = (
       .replaceAll('{name}', project.name)
   }
   throw new Error(
-    `项目 ${project.name} 没有 ${environment} 环境的 CI 链接。请在 projects.yml 配置 links.ci-${environment}，或在 config.yml 配置 ciTemplates.${environment}。`,
+    `项目 ${project.name} 没有 ${environment} 环境的 CI 链接。请在 projects.yaml 配置 links.ci-${environment}，或在 config.yaml 配置 ciTemplates.${environment}。`,
   )
 }
 
@@ -83,7 +83,7 @@ export default (defineCommand: DefineCommand) =>
         loadConfig(getStorePaths()),
       ])
       if (!config) {
-        throw new Error('config.yml 不存在，请先运行 zhao 完成首次配置。')
+        throw new Error('config.yaml 不存在，请先运行 zhao 完成首次配置。')
       }
       const url = resolveCiUrl(project, environment, config.ciTemplates)
 

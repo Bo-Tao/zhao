@@ -6,6 +6,7 @@ import {
   getStorePaths,
   loadConfig,
   loadIndex,
+  migrateLegacyYamlFiles,
   type StorePaths,
 } from '../core/store.js'
 import type { DefineCommand } from './types.js'
@@ -45,6 +46,23 @@ export const runDoctorChecks = async (
   const maxIndexAgeDays = options.maxIndexAgeDays ?? 7
   const checks: DoctorCheck[] = []
 
+  try {
+    const migrationWarnings = await migrateLegacyYamlFiles(paths)
+    if (migrationWarnings.length > 0) {
+      checks.push({
+        name: 'YAML 配置迁移',
+        status: 'warning',
+        detail: migrationWarnings.join('；'),
+      })
+    }
+  } catch (error) {
+    checks.push({
+      name: 'YAML 配置迁移',
+      status: 'fail',
+      detail: error instanceof Error ? error.message : String(error),
+    })
+  }
+
   checks.push({
     name: 'shell wrapper',
     status: env.ZHAO_SHELL_WRAPPED === '1' ? 'pass' : 'fail',
@@ -58,13 +76,13 @@ export const runDoctorChecks = async (
   try {
     config = await loadConfig(paths)
     checks.push({
-      name: 'config.yml',
+      name: 'config.yaml',
       status: config ? 'pass' : 'fail',
       detail: config ? paths.config : `不存在：${paths.config}`,
     })
   } catch (error) {
     checks.push({
-      name: 'config.yml',
+      name: 'config.yaml',
       status: 'fail',
       detail: error instanceof Error ? error.message : String(error),
     })

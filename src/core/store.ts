@@ -1,6 +1,17 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { constants } from 'node:fs'
+import {
+  copyFile,
+  lstat,
+  mkdir,
+  readFile,
+  readlink,
+  rename,
+  symlink,
+  unlink,
+  writeFile,
+} from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import type {
   MergedProject,
@@ -173,9 +184,9 @@ export const getStorePaths = (
   directory = process.env.ZHAO_CONFIG_DIR ?? join(homedir(), '.config', 'zhao'),
 ): StorePaths => ({
   directory,
-  config: join(directory, 'config.yml'),
+  config: join(directory, 'config.yaml'),
   index: join(directory, 'index.json'),
-  projects: join(directory, 'projects.yml'),
+  projects: join(directory, 'projects.yaml'),
   state: join(directory, 'state.json'),
 })
 
@@ -188,6 +199,78 @@ const readOptional = async (path: string): Promise<string | undefined> => {
     }
     throw error
   }
+}
+
+const migrateLegacyYamlFile = async (
+  legacyPath: string,
+  yamlPath: string,
+): Promise<string | undefined> => {
+  try {
+    const legacyStats = await lstat(legacyPath)
+    if (legacyStats.isSymbolicLink()) {
+      await symlink(await readlink(legacyPath), yamlPath)
+    } else {
+      await copyFile(legacyPath, yamlPath, constants.COPYFILE_EXCL)
+    }
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code
+    if (code === 'ENOENT') {
+      return
+    }
+    if (code !== 'EEXIST') {
+      throw error
+    }
+
+    let matches: boolean
+    try {
+      const [legacyStats, yamlStats] = await Promise.all([
+        lstat(legacyPath),
+        lstat(yamlPath),
+      ])
+      if (legacyStats.isSymbolicLink() || yamlStats.isSymbolicLink()) {
+        matches =
+          legacyStats.isSymbolicLink() &&
+          yamlStats.isSymbolicLink() &&
+          (await readlink(legacyPath)) === (await readlink(yamlPath))
+      } else {
+        const contents = await Promise.all([
+          readFile(legacyPath),
+          readFile(yamlPath),
+        ])
+        matches = contents[0].equals(contents[1])
+      }
+    } catch (readError) {
+      if ((readError as NodeJS.ErrnoException).code === 'ENOENT') {
+        return
+      }
+      throw readError
+    }
+    if (!matches) {
+      throw new Error(
+        `${basename(legacyPath)} 与 ${basename(yamlPath)} 同时存在且内容不同，请手动合并后删除旧文件。`,
+      )
+    }
+  }
+  try {
+    await unlink(legacyPath)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      return `${basename(yamlPath)} 已可用，但无法删除旧文件 ${basename(legacyPath)}：${String(error)}`
+    }
+  }
+}
+
+export const migrateLegacyYamlFiles = async (
+  paths = getStorePaths(),
+): Promise<string[]> => {
+  const warnings = await Promise.all([
+    migrateLegacyYamlFile(join(paths.directory, 'config.yml'), paths.config),
+    migrateLegacyYamlFile(
+      join(paths.directory, 'projects.yml'),
+      paths.projects,
+    ),
+  ])
+  return warnings.filter((warning): warning is string => warning !== undefined)
 }
 
 const atomicWrite = async (path: string, content: string): Promise<void> => {
@@ -212,7 +295,7 @@ export const loadConfig = async (
     }
     return parsed
   } catch (error) {
-    throw new Error(`config.yml 无法解析：${String(error)}`)
+    throw new Error(`config.yaml 无法解析：${String(error)}`)
   }
 }
 
@@ -280,7 +363,7 @@ export const loadProjectsFile = async (
     }
     return parsed
   } catch (error) {
-    throw new Error(`projects.yml 无法解析：${String(error)}`)
+    throw new Error(`projects.yaml 无法解析：${String(error)}`)
   }
 }
 
@@ -289,7 +372,7 @@ export const saveProjectsFile = async (
   paths = getStorePaths(),
 ): Promise<void> => {
   if (!isProjectsFile(projects)) {
-    throw new Error('projects.yml 数据结构不合法')
+    throw new Error('projects.yaml 数据结构不合法')
   }
   const { stringify } = await import('yaml')
   await atomicWrite(paths.projects, stringify(projects))

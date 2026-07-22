@@ -11,7 +11,7 @@ export default (defineCommand: DefineCommand) =>
   defineCommand({
     meta: {
       name: 'edit',
-      description: '用 $EDITOR 打开 projects.yml',
+      description: '用 $EDITOR 打开 projects.yaml',
     },
     async run() {
       await ensureOnboarded({ ensureIndex: false, scanAfterConfig: false })
