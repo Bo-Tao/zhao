@@ -74,6 +74,16 @@ export const runCittyCli = async (rawArgs: string[]): Promise<void> => {
       (await import('./commands/browse.js')).default(defineCommand),
     list: async () =>
       (await import('./commands/list.js')).default(defineCommand),
+    ci: async () => (await import('./commands/ci.js')).default(defineCommand),
+    tag: async () => (await import('./commands/tag.js')).default(defineCommand),
+    info: async () =>
+      (await import('./commands/info.js')).default(defineCommand),
+    edit: async () =>
+      (await import('./commands/edit.js')).default(defineCommand),
+    config: async () =>
+      (await import('./commands/config.js')).default(defineCommand),
+    doctor: async () =>
+      (await import('./commands/doctor.js')).default(defineCommand),
   }
   const rootCommand = defineCommand({
     meta: {

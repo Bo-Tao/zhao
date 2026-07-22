@@ -284,6 +284,17 @@ export const loadProjectsFile = async (
   }
 }
 
+export const saveProjectsFile = async (
+  projects: ZhaoProjectsFile,
+  paths = getStorePaths(),
+): Promise<void> => {
+  if (!isProjectsFile(projects)) {
+    throw new Error('projects.yml 数据结构不合法')
+  }
+  const { stringify } = await import('yaml')
+  await atomicWrite(paths.projects, stringify(projects))
+}
+
 export const loadState = async (
   paths = getStorePaths(),
 ): Promise<ZhaoState> => {

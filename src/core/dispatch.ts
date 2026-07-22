@@ -1,15 +1,18 @@
-const managementCommands = new Set(['init', 'setup', 'scan', 'browse', 'list'])
-
-const futureCommands = new Set([
+const managementCommands = new Set([
+  'init',
+  'setup',
+  'scan',
+  'browse',
+  'list',
   'ci',
   'tag',
   'info',
   'edit',
   'config',
   'doctor',
-  'open',
-  'sync',
 ])
+
+const futureCommands = new Set(['open', 'sync'])
 
 export type InvocationKind = 'management' | 'future-command' | 'search'
 

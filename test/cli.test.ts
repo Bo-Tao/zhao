@@ -41,7 +41,10 @@ describe('CLI 元信息输出', () => {
     expect(output).toContain('`-cc, --claude`')
     expect(output).toContain('`-cdx, --codex`')
     expect(output).toContain('`-t, --tmux`')
-    expect(detailLines).toHaveLength(10)
+    for (const command of ['ci', 'tag', 'info', 'edit', 'config', 'doctor']) {
+      expect(output).toContain(`\`${command}\``)
+    }
+    expect(detailLines).toHaveLength(16)
     expect(detailLines.every((line) => line.startsWith('`'))).toBe(true)
     expect(
       new Set(detailLines.map((line) => line.search(/[\u3400-\u9fff]/))).size,

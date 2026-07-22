@@ -58,9 +58,11 @@ describe('入口分发', () => {
     expect(classifyInvocation(['-v'])).toBe('management')
   })
 
-  it('不会把尚未实现的保留命令误当作项目 query', () => {
-    expect(classifyInvocation(['tag', 'repo'])).toBe('future-command')
-    expect(classifyInvocation(['ci', 'test'])).toBe('future-command')
+  it('将 v2 命令分发到管理入口，并继续保留后期命令', () => {
+    for (const command of ['ci', 'tag', 'info', 'edit', 'config', 'doctor']) {
+      expect(classifyInvocation([command])).toBe('management')
+    }
+    expect(classifyInvocation(['open', 'docs'])).toBe('future-command')
     expect(classifyInvocation(['report'])).toBe('search')
   })
 })
