@@ -48,9 +48,13 @@ describe('v2 构建产物', () => {
         'https://build.example.com/{group}/{name}',
       ]).status,
     ).toBe(0)
-    expect(run(['ci', 'test', '报告', '--print'])).toMatchObject({
+    expect(run(['ci', 'test', '报告', '-p'])).toMatchObject({
       status: 0,
       stdout: 'https://build.example.com/group/report-web\n',
+    })
+    expect(run(['browse', '报告', '-p'])).toMatchObject({
+      status: 0,
+      stdout: 'https://git.100tal.com/group/report-web\n',
     })
 
     const info = run(['info', '报告'])

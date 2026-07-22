@@ -43,11 +43,13 @@ export default (defineCommand: DefineCommand) =>
       },
       copy: {
         type: 'boolean',
+        alias: ['c'],
         description: '复制 URL 到剪贴板',
         default: false,
       },
       print: {
         type: 'boolean',
+        alias: ['p'],
         description: '只打印 URL',
         default: false,
       },

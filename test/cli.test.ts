@@ -50,6 +50,15 @@ describe('CLI 元信息输出', () => {
       new Set(detailLines.map((line) => line.search(/[\u3400-\u9fff]/))).size,
     ).toBe(1)
   })
+
+  it('browse 和 ci 帮助展示 copy 与 print 的短参数', async () => {
+    for (const command of ['browse', 'ci']) {
+      const output = await captureStdout([command, '--help'])
+
+      expect(output).toContain('-c, --copy')
+      expect(output).toContain('-p, --print')
+    }
+  })
 })
 
 describe('构建产物入口', () => {
