@@ -9,10 +9,6 @@
     "dist"
   ],
   "type": "module",
-  "publishConfig": {
-    "access": "restricted",
-    "registry": "https://npm.100tal.com/"
-  },
   "scripts": {
     "build": "tsdown",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
