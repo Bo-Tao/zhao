@@ -8,6 +8,7 @@ import {
   loadProjectsFile,
   saveConfig,
   saveIndex,
+  syncProjectsFile,
 } from '../core/store.js'
 import type { ZhaoConfig } from '../core/types.js'
 import { installWrapperInteractively } from '../shell/install.js'
@@ -78,6 +79,10 @@ export const scanAndSave = async (): Promise<number> => {
         `扫描 ${item.current}/${item.total || '?'}：${item.path}`,
       )
     })
+    await syncProjectsFile(
+      index.projects.map((project) => project.id),
+      paths,
+    )
     await saveIndex(index, paths)
     progress.stop(`已索引 ${index.projects.length} 个项目`)
     return index.projects.length

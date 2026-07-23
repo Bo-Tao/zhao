@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -7,7 +7,10 @@ import { describe, expect, it } from 'vitest'
 import {
   getStorePaths,
   loadIndex,
+  loadProjectsFile,
+  mergeProjectKeys,
   mergeProjectData,
+  syncProjectsFile,
 } from '../src/core/store.js'
 import type { ZhaoIndex, ZhaoProjectsFile } from '../src/core/types.js'
 
@@ -101,5 +104,179 @@ describe('四层数据合并', () => {
     await expect(loadIndex(getStorePaths(directory))).resolves.toEqual({
       issue: '索引已损坏',
     })
+  })
+})
+
+describe('projects.yaml 项目 key 同步', () => {
+  const emptyProjectData = {
+    aliases: [],
+    domains: [],
+    keywords: [],
+    links: {
+      'ci-test': '',
+      'ci-prod': '',
+    },
+  }
+
+  it('按稳定 ID 排序追加缺失 key，并保留已有项目数据', () => {
+    const existing: ZhaoProjectsFile = {
+      'git.example.com/legacy/old': {
+        aliases: ['旧项目'],
+        keywords: ['legacy'],
+      },
+      'git.example.com/team/existing': {
+        blockedDomains: ['blocked.example.com'],
+      },
+    }
+
+    const result = mergeProjectKeys(existing, [
+      'git.example.com/team/zeta',
+      'git.example.com/team/existing',
+      'git.example.com/team/alpha',
+      'git.example.com/team/zeta',
+    ])
+
+    expect(result.changed).toBe(true)
+    expect(Object.keys(result.projects)).toEqual([
+      'git.example.com/legacy/old',
+      'git.example.com/team/existing',
+      'git.example.com/team/alpha',
+      'git.example.com/team/zeta',
+    ])
+    expect(result.projects).toMatchObject(existing)
+    expect(result.projects['git.example.com/team/alpha']).toEqual(
+      emptyProjectData,
+    )
+    expect(result.projects['git.example.com/team/zeta']).toEqual(
+      emptyProjectData,
+    )
+  })
+
+  it('文件缺失时为扫描项目创建 key', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))
+    const paths = getStorePaths(directory)
+
+    await expect(
+      syncProjectsFile(
+        ['git.example.com/team/b', 'git.example.com/team/a'],
+        paths,
+      ),
+    ).resolves.toBe(true)
+
+    await expect(loadProjectsFile(paths)).resolves.toEqual({
+      'git.example.com/team/a': emptyProjectData,
+      'git.example.com/team/b': emptyProjectData,
+    })
+    await expect(readFile(paths.projects, 'utf8')).resolves.toBe(
+      [
+        'git.example.com/team/a:',
+        '  aliases: []',
+        '  domains: []',
+        '  keywords: []',
+        '  links:',
+        '    ci-test: ""',
+        '    ci-prod: ""',
+        '',
+        'git.example.com/team/b:',
+        '  aliases: []',
+        '  domains: []',
+        '  keywords: []',
+        '  links:',
+        '    ci-test: ""',
+        '    ci-prod: ""',
+        '',
+      ].join('\n'),
+    )
+  })
+
+  it('文件缺失且没有扫描结果时仍创建空配置', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))
+    const paths = getStorePaths(directory)
+
+    await expect(syncProjectsFile([], paths)).resolves.toBe(true)
+    await expect(readFile(paths.projects, 'utf8')).resolves.toBe('{}\n')
+  })
+
+  it('只追加缺失 key，重复同步幂等且无新增项时不重写原文件', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))
+    const paths = getStorePaths(directory)
+    const original = [
+      '# 手工维护的注释',
+      'git.example.com/team/existing:',
+      '  aliases:',
+      '    - 现有项目',
+      'git.example.com/legacy/old:',
+      '  keywords:',
+      '    - legacy',
+      '',
+    ].join('\n')
+    await writeFile(paths.projects, original)
+
+    await expect(
+      syncProjectsFile(
+        [
+          'git.example.com/team/existing',
+          'git.example.com/team/new',
+          'git.example.com/team/new',
+        ],
+        paths,
+      ),
+    ).resolves.toBe(true)
+    await expect(loadProjectsFile(paths)).resolves.toEqual({
+      'git.example.com/team/existing': {
+        aliases: ['现有项目'],
+      },
+      'git.example.com/legacy/old': {
+        keywords: ['legacy'],
+      },
+      'git.example.com/team/new': emptyProjectData,
+    })
+
+    const synchronized = await readFile(paths.projects, 'utf8')
+    await expect(
+      syncProjectsFile(
+        ['git.example.com/team/existing', 'git.example.com/team/new'],
+        paths,
+      ),
+    ).resolves.toBe(false)
+    await expect(readFile(paths.projects, 'utf8')).resolves.toBe(synchronized)
+  })
+
+  it('无新增项时逐字保留原文件', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))
+    const paths = getStorePaths(directory)
+    const original =
+      '# 保留注释和排版\n"git.example.com/team/existing": { aliases: [现有项目] }\n'
+    await writeFile(paths.projects, original)
+
+    await expect(
+      syncProjectsFile(['git.example.com/team/existing'], paths),
+    ).resolves.toBe(false)
+    await expect(readFile(paths.projects, 'utf8')).resolves.toBe(original)
+  })
+
+  it('无效 YAML 不会被空配置覆盖', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))
+    const paths = getStorePaths(directory)
+    const invalid = 'git.example.com/team/repo: [\n'
+    await writeFile(paths.projects, invalid)
+
+    await expect(
+      syncProjectsFile(['git.example.com/team/new'], paths),
+    ).rejects.toThrow('projects.yaml 无法解析')
+    await expect(readFile(paths.projects, 'utf8')).resolves.toBe(invalid)
+  })
+
+  it('原子写入失败时不覆盖已有配置', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))
+    const paths = getStorePaths(directory)
+    const original = 'git.example.com/team/existing: {}\n'
+    await writeFile(paths.projects, original)
+    await mkdir(`${paths.projects}.${process.pid}.tmp`)
+
+    await expect(
+      syncProjectsFile(['git.example.com/team/new'], paths),
+    ).rejects.toThrow()
+    await expect(readFile(paths.projects, 'utf8')).resolves.toBe(original)
   })
 })

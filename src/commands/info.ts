@@ -48,7 +48,9 @@ export const formatProjectInfo = (
     )
   }
   for (const [name, url] of Object.entries(project.links)) {
-    lines.push(`${name}: ${url} [手动]`)
+    if (url) {
+      lines.push(`${name}: ${url} [手动]`)
+    }
   }
   for (const environment of ['test', 'prod'] as const) {
     const name = `ci-${environment}`

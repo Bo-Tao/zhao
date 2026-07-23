@@ -180,6 +180,8 @@ zhao init bash
 zhao scan
 ```
 
+扫描还会自动维护 `projects.yaml`：文件不存在时创建，并用 Git remote 生成的稳定项目 ID 补齐缺失 key。新项目会初始化空的 `aliases`、`domains`、`keywords`，以及空的 `links.ci-test`、`links.ci-prod`。已有手工元数据和未被本次扫描发现的旧条目都会保留；没有新增项目时不会重写文件。
+
 扫描会跳过损坏或没有 Git remote 的仓库，不会因为单个仓库失败而中断。已不在扫描目录中的项目会在重建后从索引中移除。
 
 ### `zhao browse`
