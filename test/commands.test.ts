@@ -187,6 +187,10 @@ describe('info 命令', () => {
     const output = formatProjectInfo(
       {
         ...project,
+        links: {
+          'ci-test': '',
+          'ci-prod': '',
+        },
         domains: [
           {
             value: 'app.example.com',
@@ -225,6 +229,8 @@ describe('info 命令', () => {
     expect(output).toContain(
       'ci-test: https://build.example.com/group/repo [模板]',
     )
+    expect(output).not.toContain('ci-test:  [手动]')
+    expect(output).not.toContain('ci-prod:  [手动]')
   })
 })
 

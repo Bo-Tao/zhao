@@ -3,6 +3,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
 import type {
+  ManualProjectData,
   MergedProject,
   ZhaoConfig,
   ZhaoIndex,
@@ -265,11 +266,10 @@ export const saveIndex = async (
   await atomicWrite(paths.index, `${JSON.stringify(value, null, 2)}\n`)
 }
 
-export const loadProjectsFile = async (
-  paths = getStorePaths(),
+const parseProjectsFile = async (
+  content: string,
 ): Promise<ZhaoProjectsFile> => {
-  const content = await readOptional(paths.projects)
-  if (content === undefined || !content.trim()) {
+  if (!content.trim()) {
     return {}
   }
   try {
@@ -284,6 +284,16 @@ export const loadProjectsFile = async (
   }
 }
 
+export const loadProjectsFile = async (
+  paths = getStorePaths(),
+): Promise<ZhaoProjectsFile> => {
+  const content = await readOptional(paths.projects)
+  if (content === undefined) {
+    return {}
+  }
+  return parseProjectsFile(content)
+}
+
 export const saveProjectsFile = async (
   projects: ZhaoProjectsFile,
   paths = getStorePaths(),
@@ -291,8 +301,67 @@ export const saveProjectsFile = async (
   if (!isProjectsFile(projects)) {
     throw new Error('projects.yaml 数据结构不合法')
   }
-  const { stringify } = await import('yaml')
-  await atomicWrite(paths.projects, stringify(projects))
+  const { Document, isMap, isNode } = await import('yaml')
+  const document = new Document(projects)
+  if (isMap(document.contents)) {
+    for (const pair of document.contents.items.slice(1)) {
+      if (isNode(pair.key)) {
+        pair.key.spaceBefore = true
+      }
+    }
+  }
+  await atomicWrite(paths.projects, document.toString())
+}
+
+export interface ProjectKeyMergeResult {
+  projects: ZhaoProjectsFile
+  changed: boolean
+}
+
+const createEmptyProjectData = (): ManualProjectData => ({
+  aliases: [],
+  domains: [],
+  keywords: [],
+  links: {
+    'ci-test': '',
+    'ci-prod': '',
+  },
+})
+
+export const mergeProjectKeys = (
+  projects: ZhaoProjectsFile,
+  projectIds: string[],
+): ProjectKeyMergeResult => {
+  const missingIds = unique(projectIds)
+    .filter((id) => !Object.prototype.hasOwnProperty.call(projects, id))
+    .sort()
+
+  if (missingIds.length === 0) {
+    return { projects, changed: false }
+  }
+
+  return {
+    projects: Object.fromEntries([
+      ...Object.entries(projects),
+      ...missingIds.map((id) => [id, createEmptyProjectData()]),
+    ]),
+    changed: true,
+  }
+}
+
+export const syncProjectsFile = async (
+  projectIds: string[],
+  paths = getStorePaths(),
+): Promise<boolean> => {
+  const content = await readOptional(paths.projects)
+  const projects = content === undefined ? {} : await parseProjectsFile(content)
+  const merged = mergeProjectKeys(projects, projectIds)
+
+  if (content === undefined || merged.changed) {
+    await saveProjectsFile(merged.projects, paths)
+    return true
+  }
+  return false
 }
 
 export const loadState = async (

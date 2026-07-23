@@ -99,12 +99,12 @@ zhao() {
 
 ### 3.2 四个数据文件（`~/.config/zhao/`）
 
-| 文件            | 内容                                                   | 性质                                 |
-| --------------- | ------------------------------------------------------ | ------------------------------------ |
-| `config.yaml`   | 扫描根目录列表、ci URL 模板、fzf 开关等用户配置        | 用户维护                             |
-| `index.json`    | `zhao scan` 生成的项目索引                             | **随时可删可重建，不含任何手工数据** |
-| `projects.yaml` | 手动元数据层：alias、域名、关键词、links、域名拉黑名单 | 用户/团队维护，未来通过 git 仓库共享 |
-| `state.json`    | frecency 使用记录（每次选中项目时更新）                | 程序维护，变更频繁                   |
+| 文件            | 内容                                                   | 性质                                                                |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------- |
+| `config.yaml`   | 扫描根目录列表、ci URL 模板、fzf 开关等用户配置        | 用户维护                                                            |
+| `index.json`    | `zhao scan` 生成的项目索引                             | **随时可删可重建，不含任何手工数据**                                |
+| `projects.yaml` | 手动元数据层：alias、域名、关键词、links、域名拉黑名单 | `scan` 自动补齐项目 key，字段由用户/团队维护，未来通过 git 仓库共享 |
+| `state.json`    | frecency 使用记录（每次选中项目时更新）                | 程序维护，变更频繁                                                  |
 
 检索时四者在内存合并。合并优先级：projects.yaml 手动数据 > index.json 自动数据。
 
@@ -180,7 +180,8 @@ CI 模板当前只支持 `{group}` 和 `{name}` 两个变量。`group` 来自 Gi
 2. 每个仓库提取：`.git/config` 的 remote → id/group；`package.json` 的 name/description/keywords/依赖特征；`README.md` 标题与一级标题。
 3. **域名候选提取**：在配置类文件（`.env*`、`*.config.*`、`src/api/**`、`nginx*` 等，控制扫描范围避免慢）中正则匹配域名字符串，标 `type: "api"`、记录来源文件、confidence 0.9；剔除噪音白名单（npm registry、常见 CDN 等）及该项目 blockedDomains。
 4. **启发式页面域名猜测**：由 API 域名生成候选（如 `api.report.x.com` → `report.x.com`），标 `type: "guess"`、confidence 0.3。
-5. 全量重写 index.json；本地路径已不存在的项目自动剔除（无需 rm 命令）。
+5. 按 remote 生成的稳定项目 ID 同步 projects.yaml：文件不存在时创建，只追加缺失 key；新项目初始化空的 aliases、domains、keywords 以及 links.ci-test、links.ci-prod，保留已有手工元数据和旧条目，无变化时不重写。
+6. 全量重写 index.json；本地路径已不存在的项目自动剔除（无需 rm 命令）。
 
 ### 4.2 检索排序（`rankProjects(query)`）
 
