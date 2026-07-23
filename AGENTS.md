@@ -33,36 +33,19 @@ Treat user configuration and project paths as untrusted input. Avoid overwriting
 <claude-mem-context>
 # Memory Context
 
-# [zhao] recent context, 2026-07-24 12:27am GMT+8
+# [zhao] recent context, 2026-07-24 12:44am GMT+8
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (21,472t read) | 656,870t work | 97% savings
+Stats: 50 obs (19,547t read) | 619,571t work | 97% savings
 
 ### Jul 22, 2026
 S565 Fix help table alignment regression after Citty library upgrade broke test expectations (Jul 22 at 8:21 PM)
 S578 Design auto-management of projects.yaml for zhao scan command with incremental sync (Jul 22 at 8:24 PM)
 ### Jul 23, 2026
-4148 11:14p 🔵 Pre-existing TypeScript errors in prompts module unrelated to sync implementation
-4149 11:15p ✅ Quality gates passed for projects.yaml sync implementation
-4150 " 🟣 zhao scan projects.yaml auto-sync feature complete
-4151 11:16p ✅ Refined atomic write test and updated documentation for projects.yaml auto-sync
-4152 " 🔵 Formatting issue in zhao-spec.md documentation update
-4153 " 🔵 Full pnpm check blocked by unrelated AGENTS.md and package.json formatting
-4154 11:17p 🔵 Linting clean but pre-existing TypeScript errors persist in prompts module
-4155 " ✅ Full test suite passed with no regressions from projects.yaml sync implementation
-4156 " ✅ Code simplification review initiated for projects.yaml sync implementation
-4158 11:18p ✅ Second simplification reviewer agent spawned for code quality analysis
-4157 " 🟣 zhao scan auto-manages projects.yaml configuration
 S580 Implement automatic projects.yaml synchronization during zhao scan command execution (Jul 23 at 11:18 PM)
-4159 11:19p ✅ Third efficiency reviewer agent spawned completing simplification review panel
-4160 " 🔵 Code simplification reviewers completing analysis with clean whitespace verification
-4161 " 🔄 Applied code reuse simplification replacing manual deduplication with existing helper
-4162 11:20p ✅ Simplification refactor verified with all tests passing and shipping workflow initiated
-4163 " ✅ Entering formal code review phase with ce-code-review skill for final validation
-4164 11:21p 🔵 Code review scope analysis reveals 208-line diff triggering comprehensive reviewer roster
 4165 11:22p ⚖️ zhao scan auto-management of projects.yaml
 4167 11:23p 🟣 zhao scan auto-manages projects.yaml with stable project keys
 4168 11:24p ⚖️ Auto-maintain projects.yaml during zhao scan indexing
@@ -104,14 +87,23 @@ S586 Fix projects.yaml initialization to include empty field structure instead o
 4197 " ✅ Code review completed: Ready to merge with resolved display bug
 4198 12:21a ✅ YAML formatting preference updated for cactus-blackboard-02 config
 S587 Generate v0.1.0 release note using document-release skill (Jul 24 at 12:25 AM)
-**Investigated**: The document-release skill documentation was read to understand the workflow for creating release notes. The skill performs post-ship documentation updates by cross-referencing diffs, updating project documentation files (README, ARCHITECTURE, CONTRIBUTING, CHANGELOG), polishing CHANGELOG voice, cleaning TODOs, and optionally bumping VERSION.
+4199 12:28a 🔵 YAML Library Spacing Control via spaceBefore Property
+4200 " 🔵 YAML Pair Object Does Not Support Property Access Pattern
+4201 " 🔵 YAML Pair.key.spaceBefore Adds Blank Line Between Top-Level Keys
+4202 " 🔵 Test Expects Blank Lines Between YAML Keys But Implementation Missing
+4203 " 🟣 Added Blank Line Spacing Between Top-Level Project Keys in YAML
+4204 12:29a 🔵 Pre-existing TypeScript Errors in UI Prompts Module
+4205 12:34a 🟣 Auto-sync projects.yaml during scan
+4206 12:40a ✅ Created release branch for version 0.2.0
+4207 " 🔵 Identified changes from 0.1.0 to prepare for 0.2.0 release
+4208 " 🔵 No CHANGELOG file exists; version bump requires creating release documentation
+4209 12:41a ✅ Version bumped to 0.2.0 with release notes
+4210 " 🔵 Version 0.2.0 changes verified across codebase
+4211 " ✅ All tests pass after version 0.2.0 bump
+4212 12:42a 🔵 Formatting issues detected in AGENTS.md, README.md, and package.json
+4213 " 🔵 Formatting fixed but pre-existing TypeScript errors block release
+4214 12:43a 🔵 Test build failures caused by missing CI environment variable in vitest context
+4215 " ✅ All tests pass with CI=true, confirming version 0.2.0 release is ready
 
-**Learned**: The document-release skill follows a structured 9-step process: detects git platform (GitHub/GitLab), determines base branch, reads existing documentation, audits cross-file consistency, checks for discoverability (all docs reachable from README or AGENTS.md), cleans completed TODOs, and always asks before bumping VERSION. It never silently modifies version numbers and uses AskUserQuestion for narrative contradictions.
-
-**Completed**: Skill initialization completed successfully. The gstack session tracking was set up in ~/.gstack/sessions and telemetry logging was initialized for the document-release skill session in the zhao project directory.
-
-**Next Steps**: The document-release skill will execute its workflow to generate the v0.1.0 release note by detecting the git platform, reading project documentation, auditing consistency, and creating a structured release note based on the changes in the repository.
-
-
-Access 657k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 620k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
