@@ -61,7 +61,9 @@ describe('扫描元数据', () => {
     ).toEqual(['vue3', 'vite', 'typescript', 'pinia'])
   })
 
-  it('从扫描根目录发现真实 .git 目录并写入项目元数据', async ({ task }) => {
+  it('使用项目目录名写入扫描元数据，而不是 package.json name', async ({
+    task,
+  }) => {
     const root = join(tmpdir(), `zhao-scan-${task.id}-${Date.now()}`)
     const repository = join(root, 'report-web')
     await mkdir(join(repository, '.git'), { recursive: true })
@@ -73,7 +75,7 @@ describe('扫描元数据', () => {
     await writeFile(
       join(repository, 'package.json'),
       JSON.stringify({
-        name: 'report-web',
+        name: '@workspace/report-package',
         description: '报告\n页面',
         dependencies: { vue: '^3.5.0' },
         devDependencies: { vite: '^7.0.0' },

@@ -206,9 +206,7 @@ export const scanProject = async (
     knownRemote ?? readGitRemote(repositoryRoot),
     readJson(join(repositoryRoot, 'package.json')),
   ])
-  const pathName = basename(repositoryRoot)
-  const packageName =
-    typeof packageJson.name === 'string' ? packageJson.name : pathName
+  const name = basename(repositoryRoot)
   const rawKeywords = Array.isArray(packageJson.keywords)
     ? packageJson.keywords.filter(
         (keyword): keyword is string => typeof keyword === 'string',
@@ -218,7 +216,7 @@ export const scanProject = async (
 
   return {
     id: remoteToProjectId(remote),
-    name: packageName,
+    name,
     path: repositoryRoot,
     remote,
     group: getRemoteGroup(remote),

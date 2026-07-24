@@ -33,49 +33,15 @@ Treat user configuration and project paths as untrusted input. Avoid overwriting
 <claude-mem-context>
 # Memory Context
 
-# [zhao] recent context, 2026-07-24 12:44am GMT+8
+# [zhao] recent context, 2026-07-24 4:55pm GMT+8
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,547t read) | 619,571t work | 97% savings
+Stats: 50 obs (17,056t read) | 504,222t work | 97% savings
 
-### Jul 22, 2026
-S565 Fix help table alignment regression after Citty library upgrade broke test expectations (Jul 22 at 8:21 PM)
-S578 Design auto-management of projects.yaml for zhao scan command with incremental sync (Jul 22 at 8:24 PM)
-### Jul 23, 2026
-S580 Implement automatic projects.yaml synchronization during zhao scan command execution (Jul 23 at 11:18 PM)
-4165 11:22p ⚖️ zhao scan auto-management of projects.yaml
-4167 11:23p 🟣 zhao scan auto-manages projects.yaml with stable project keys
-4168 11:24p ⚖️ Auto-maintain projects.yaml during zhao scan indexing
-S581 Auto-generate and sync projects.yaml keys during zhao scan - create file if missing, append new project keys if exists, skip existing entries (Jul 23 at 11:25 PM)
-S582 Auto-generate project keys in projects.yaml during zhao scan, with merge logic to avoid overwriting existing entries (Jul 23 at 11:27 PM)
-4169 11:28p 🟣 Automatic projects.yaml synchronization in zhao scan
-4170 11:29p 🔵 Race condition in projects.yaml concurrent access
-4171 " 🔵 Adversarial review step failed due to Claude API connectivity issue
-4172 11:31p 🔵 Code review completed with 2 findings across correctness and reliability dimensions
-4173 11:32p ⚖️ Review synthesis demoted comment-loss finding as settled design decision
-4174 11:33p ⚖️ zhao scan auto-generation behavior for projects.yaml
-4175 11:34p 🟣 Auto-sync projects.yaml during zhao scan
-4176 " 🔵 Pre-existing TypeScript errors in prompts module
-4177 11:35p ⚖️ Code review completed: projects.yaml auto-sync ready to merge
 ### Jul 24, 2026
-4178 12:02a 🟣 Auto-creation and incremental update of projects.yaml in zhao scan
-4179 " 🔵 YAML serialization renders empty metadata fields verbosely
-4180 " ✅ Test expectations updated to match verbose YAML serialization
-4181 12:03a 🔵 Test-first verification confirms current implementation generates minimal empty objects
-4182 " 🟣 Implemented verbose empty metadata template for new project entries
-4183 " ✅ Documentation updated to describe verbose empty metadata initialization
-4184 " 🔵 Quality checks pass except for pre-existing type errors in unrelated file
-4185 12:04a ✅ Transition to shipping workflow after successful implementation
-4186 12:05a 🔵 Code review scope analysis shows 252 executable lines changed across agent-facing surfaces
-4187 " ✅ Code review infrastructure initialized with cross-model adversarial pass preparation
-4188 " ✅ Cross-model adversarial review job started with independent Claude verification
-4189 12:06a ✅ Reviewer persona templates and protocols loaded for multi-agent code review
-4190 " ✅ Diff and file list staged to disk for efficient reviewer distribution
-4191 12:07a ✅ Local reviewer subagents dispatched in concurrent batch for multi-perspective code review
-4192 " ✅ Testing reviewer spawned and context validation performed for reviewer batch
 S583 Fix projects.yaml initialization to create structured templates with all fields instead of empty objects (Jul 24 at 12:07 AM)
 4193 12:08a 🔵 projects.yaml initialization creates empty objects instead of structured templates
 S584 Code review of projects.yaml auto-maintenance implementation that initializes all fields with structured templates instead of empty objects (Jul 24 at 12:08 AM)
@@ -83,10 +49,11 @@ S584 Code review of projects.yaml auto-maintenance implementation that initializ
 S585 Implement automatic projects.yaml scaffolding with initialized empty fields instead of bare empty objects (Jul 24 at 12:11 AM)
 S586 Fix projects.yaml initialization to include empty field structure instead of empty objects (Jul 24 at 12:11 AM)
 4195 12:14a 🔵 projects.yaml default initialization structure issue identified
+S587 Generate v0.1.0 release note using document-release skill (Jul 24 at 12:15 AM)
 4196 12:16a 🟣 Auto-sync projects.yaml on scan with empty field templates
 4197 " ✅ Code review completed: Ready to merge with resolved display bug
 4198 12:21a ✅ YAML formatting preference updated for cactus-blackboard-02 config
-S587 Generate v0.1.0 release note using document-release skill (Jul 24 at 12:25 AM)
+S589 Auto-initialize projects.yaml with empty field structure during zhao scan and fix display of empty CI link placeholders (Jul 24 at 12:25 AM)
 4199 12:28a 🔵 YAML Library Spacing Control via spaceBefore Property
 4200 " 🔵 YAML Pair Object Does Not Support Property Access Pattern
 4201 " 🔵 YAML Pair.key.spaceBefore Adds Blank Line Between Top-Level Keys
@@ -104,6 +71,37 @@ S587 Generate v0.1.0 release note using document-release skill (Jul 24 at 12:25 
 4213 " 🔵 Formatting fixed but pre-existing TypeScript errors block release
 4214 12:43a 🔵 Test build failures caused by missing CI environment variable in vitest context
 4215 " ✅ All tests pass with CI=true, confirming version 0.2.0 release is ready
+4216 12:44a ✅ Version 0.2.0 release validated and ready for commit
+4217 12:48a 🟣 Auto-maintenance of projects.yaml by zhao scan command
+4218 " ✅ Version 0.2.0 release preparation
+4230 12:56p 🔴 Fixed empty CI link placeholders appearing in project info output
+4231 " 🟣 Implemented auto-initialization of project configuration during scan
+4232 " 🔵 Identified concurrent write race condition in projects.yaml updates
+S591 Auto-maintain projects.yaml during zhao scan - create file if missing, supplement project keys for newly discovered repositories (Jul 24 at 12:57 PM)
+S593 Bump version to 0.2.0 and generate release notes using document-release skill (Jul 24 at 3:47 PM)
+S594 Auto-maintain projects.yaml during zhao scan - create file if missing and auto-generate stable project keys from Git remotes (Jul 24 at 3:48 PM)
+S596 Implement automatic projects.yaml maintenance during zhao scan - create file if missing, auto-generate project keys from Git remotes, preserve manual metadata (Jul 24 at 3:48 PM)
+4238 4:32p 🔵 Scanner name field sources from package.json with fallback
+4239 4:33p ✅ Red test prepared for directory-name-first scanner behavior
+4240 " 🔵 Red test confirmed: scanner returns package.json name, not directory name
+4241 4:34p 🟣 Scanner now unconditionally uses directory name for project name field
+4242 " ✅ Green test confirms directory-name-first scanner behavior working
+4243 " 🔵 Quality check blocked by formatting issues in AGENTS.md and package.json
+4244 " ✅ Full test suite passes with directory-name-first scanner implementation
+4245 4:35p 🔵 Typecheck reveals pre-existing errors in ui/prompts.ts unrelated to scanner changes
+4246 " 🔄 Scanner variable renamed for clarity and consistency
+4247 " ✅ Test name updated to explicitly document directory-name-first behavior
+4248 4:36p ✅ Scan persistence test strengthened to validate directory-name-first behavior
+4249 " ✅ Complete quality pipeline passes for scanner directory-name implementation
+4250 " ✅ Scanner directory-name-first feature complete and ready for shipping
+4251 4:48p ✅ Project scanner simplified to use directory basename for naming
+4252 4:50p 🔵 Project selection prompt hint text wrapping issue
+4253 " 🔵 @clack/prompts select automatically wraps hint text exceeding terminal width
+4254 4:51p 🔵 Text wrapping dependency chain identified for prompt display issue
+4255 " 🔵 fast-string-truncated-width already available as transitive dependency for text truncation
+4256 4:54p 🔵 limitOptions function implementation shows wrapping mechanism in select prompt
+4257 4:55p ✅ Implemented formatProjectOption to prevent multi-line wrapping in select prompt
+4258 " ✅ Added path fields to test project objects for completeness
 
-Access 620k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 504k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
