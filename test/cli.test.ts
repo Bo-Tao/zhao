@@ -25,7 +25,7 @@ afterEach(() => {
 
 describe('CLI 元信息输出', () => {
   it('-v 输出版本号', async () => {
-    await expect(captureStdout(['-v'])).resolves.toBe('0.2.0\n')
+    await expect(captureStdout(['-v'])).resolves.toBe('0.3.0\n')
   })
 
   it('帮助表格的条目与说明分别左对齐', async () => {
