@@ -22,7 +22,10 @@ const createRepository = async (
   )
   await writeFile(
     join(repository, 'package.json'),
-    JSON.stringify({ name, description: `${name} description` }),
+    JSON.stringify({
+      name: `@workspace/${name}-package`,
+      description: `${name} description`,
+    }),
   )
   return repository
 }
@@ -75,8 +78,11 @@ describe('zhao scan 持久化', () => {
     const firstProjects = parse(
       await readFile(join(configDirectory, 'projects.yaml'), 'utf8'),
     ) as ZhaoProjectsFile
-    expect(firstIndex.projects.map((project) => project.id)).toEqual([
-      'git.example.com/team/report-web',
+    expect(firstIndex.projects).toMatchObject([
+      {
+        id: 'git.example.com/team/report-web',
+        name: 'report-web',
+      },
     ])
     expect(firstProjects).toEqual({
       'git.example.com/team/report-web': emptyProjectData,
