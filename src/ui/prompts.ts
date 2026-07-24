@@ -1,10 +1,104 @@
 import type { MergedProject, RankedProject } from '../core/types.js'
 
+const DEFAULT_TERMINAL_COLUMNS = 80
+// Clack 会把带 ANSI 颜色的引导前缀原始长度计入换行宽度。
+const PROJECT_OPTION_PADDING = 18
+const PROJECT_OPTION_SEPARATOR = ' · '
+const PROJECT_OPTION_HINT_PADDING = 3
+const MIN_PROJECT_OPTION_SECTION_WIDTH = 4
+const ELLIPSIS = '…'
+const graphemeSegmenter = new Intl.Segmenter(undefined, {
+  granularity: 'grapheme',
+})
+const WIDE_CHARACTER_PATTERN =
+  /[\u1100-\u115f\u2329\u232a\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe10-\ufe19\ufe30-\ufe6f\uff00-\uff60\uffe0-\uffe6\u{1b000}-\u{1b001}\u{1f200}-\u{1faff}\u{20000}-\u{3fffd}]/u
+const EMOJI_PATTERN = /\p{Extended_Pictographic}/u
+const MARK_PATTERN = /^\p{Mark}+$/u
+
 interface PromptOutput {
   write: (...args: any[]) => any
   rows?: number
   columns?: number
   isTTY?: boolean
+}
+
+interface ProjectOptionSource {
+  name: string
+  description: string
+  path: string
+}
+
+interface FittedText {
+  text: string
+  width: number
+}
+
+const getGraphemeWidth = (value: string): number => {
+  if (MARK_PATTERN.test(value)) {
+    return 0
+  }
+  return WIDE_CHARACTER_PATTERN.test(value) || EMOJI_PATTERN.test(value) ? 2 : 1
+}
+
+const sliceToWidth = (
+  value: string,
+  limit: number,
+): { text: string; width: number; truncated: boolean } => {
+  let end = 0
+  let width = 0
+  for (const { segment } of graphemeSegmenter.segment(value)) {
+    const segmentWidth = getGraphemeWidth(segment)
+    if (width + segmentWidth > limit) {
+      return { text: value.slice(0, end), width, truncated: true }
+    }
+    end += segment.length
+    width += segmentWidth
+  }
+  return { text: value, width, truncated: false }
+}
+
+const fitText = (value: string, limit: number): FittedText => {
+  const safeLimit = Math.max(0, limit)
+  const fitted = sliceToWidth(value, safeLimit)
+  if (!fitted.truncated) {
+    return fitted
+  }
+
+  const truncated = sliceToWidth(value, Math.max(0, safeLimit - 1))
+  return {
+    text: `${truncated.text}${safeLimit > 0 ? ELLIPSIS : ''}`,
+    width: truncated.width + (safeLimit > 0 ? 1 : 0),
+  }
+}
+
+export const formatProjectOption = (
+  project: ProjectOptionSource,
+  reason: string,
+  columns = DEFAULT_TERMINAL_COLUMNS,
+): { label: string; hint?: string } => {
+  const availableWidth = Math.max(
+    1,
+    (Number.isFinite(columns)
+      ? Math.floor(columns)
+      : DEFAULT_TERMINAL_COLUMNS) - PROJECT_OPTION_PADDING,
+  )
+  const description = project.description.trim()
+  const fullLabel = `${project.name}${
+    description ? `${PROJECT_OPTION_SEPARATOR}${description}` : ''
+  }`
+  const hintLimit = Math.floor(availableWidth / 3)
+  if (reason && hintLimit >= MIN_PROJECT_OPTION_SECTION_WIDTH) {
+    const hint = fitText(reason, hintLimit)
+    const labelLimit = availableWidth - hint.width - PROJECT_OPTION_HINT_PADDING
+    if (labelLimit >= MIN_PROJECT_OPTION_SECTION_WIDTH) {
+      return {
+        label: fitText(fullLabel, labelLimit).text,
+        hint: hint.text,
+      }
+    }
+  }
+
+  return { label: fitText(fullLabel, availableWidth).text }
 }
 
 const replaceProperty = (
@@ -134,14 +228,14 @@ export const promptProject = async (
 ): Promise<MergedProject> =>
   withOutputOnStderr(async () => {
     const prompts = await import('@clack/prompts')
+    const columns = process.stdout.columns ?? DEFAULT_TERMINAL_COLUMNS
     const id = unwrap(
       await prompts.select({
         message: '选择项目',
         maxItems: 12,
         options: projects.map(({ project, reason }) => ({
           value: project.id,
-          label: `${project.name}${project.description ? ` · ${project.description}` : ''}`,
-          hint: `${reason} · ${project.path}`,
+          ...formatProjectOption(project, reason, columns),
         })),
       }),
       prompts,

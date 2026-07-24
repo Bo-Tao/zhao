@@ -33,24 +33,15 @@ Treat user configuration and project paths as untrusted input. Avoid overwriting
 <claude-mem-context>
 # Memory Context
 
-# [zhao] recent context, 2026-07-24 4:36pm GMT+8
+# [zhao] recent context, 2026-07-24 4:55pm GMT+8
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (17,712t read) | 448,107t work | 96% savings
+Stats: 50 obs (17,056t read) | 504,222t work | 97% savings
 
 ### Jul 24, 2026
-4184 12:03a 🔵 Quality checks pass except for pre-existing type errors in unrelated file
-4185 12:04a ✅ Transition to shipping workflow after successful implementation
-4186 12:05a 🔵 Code review scope analysis shows 252 executable lines changed across agent-facing surfaces
-4187 " ✅ Code review infrastructure initialized with cross-model adversarial pass preparation
-4188 " ✅ Cross-model adversarial review job started with independent Claude verification
-4189 12:06a ✅ Reviewer persona templates and protocols loaded for multi-agent code review
-4190 " ✅ Diff and file list staged to disk for efficient reviewer distribution
-4191 12:07a ✅ Local reviewer subagents dispatched in concurrent batch for multi-perspective code review
-4192 " ✅ Testing reviewer spawned and context validation performed for reviewer batch
 S583 Fix projects.yaml initialization to create structured templates with all fields instead of empty objects (Jul 24 at 12:07 AM)
 4193 12:08a 🔵 projects.yaml initialization creates empty objects instead of structured templates
 S584 Code review of projects.yaml auto-maintenance implementation that initializes all fields with structured templates instead of empty objects (Jul 24 at 12:08 AM)
@@ -102,6 +93,15 @@ S596 Implement automatic projects.yaml maintenance during zhao scan - create fil
 4247 " ✅ Test name updated to explicitly document directory-name-first behavior
 4248 4:36p ✅ Scan persistence test strengthened to validate directory-name-first behavior
 4249 " ✅ Complete quality pipeline passes for scanner directory-name implementation
+4250 " ✅ Scanner directory-name-first feature complete and ready for shipping
+4251 4:48p ✅ Project scanner simplified to use directory basename for naming
+4252 4:50p 🔵 Project selection prompt hint text wrapping issue
+4253 " 🔵 @clack/prompts select automatically wraps hint text exceeding terminal width
+4254 4:51p 🔵 Text wrapping dependency chain identified for prompt display issue
+4255 " 🔵 fast-string-truncated-width already available as transitive dependency for text truncation
+4256 4:54p 🔵 limitOptions function implementation shows wrapping mechanism in select prompt
+4257 4:55p ✅ Implemented formatProjectOption to prevent multi-line wrapping in select prompt
+4258 " ✅ Added path fields to test project objects for completeness
 
-Access 448k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 504k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
