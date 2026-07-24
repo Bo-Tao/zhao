@@ -1,14 +1,11 @@
 {
   "name": "@botaoxyz/zhao",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "按域名、关键词和模块快速检索本地项目的 CLI",
   "author": "BoTao <botaoxyz@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Bo-Tao/zhao.git"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "bin": {
     "zhao": "dist/index.mjs"
@@ -17,6 +14,9 @@
     "dist"
   ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
