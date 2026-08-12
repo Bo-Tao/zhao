@@ -27,6 +27,34 @@ const NOISE_DOMAINS = new Set([
 const DOMAIN_PATTERN =
   /(?<![@\w-])(?:https?:\/\/)?((?:[a-z0-9-]+\.)+[a-z]{2,})(?::\d+)?(?:[/?#][^\s"'`]*)?/gi
 
+const CODE_SOURCE_PATTERN = /\.(?:[cm]?[jt]sx?|vue)$/i
+const ENV_SOURCE_PATTERN = /(?:^|\/)\.env(?:\.|$)/i
+const NGINX_SOURCE_PATTERN = /(?:^|\/)nginx[^/]*(?:\.conf)?$/i
+const DOMAIN_KEY_PATTERN =
+  /\b[\w$]*(?:url|uri|host|domain|endpoint|origin|proxy|target)[\w$]*\s*[:=]\s*(['"`]?)$/i
+
+const isLikelyBareDomain = (
+  content: string,
+  matchIndex: number,
+  source: string,
+): boolean => {
+  if (ENV_SOURCE_PATTERN.test(source)) {
+    return true
+  }
+
+  const lineStart = content.lastIndexOf('\n', matchIndex - 1) + 1
+  const linePrefix = content.slice(lineStart, matchIndex)
+  if (
+    NGINX_SOURCE_PATTERN.test(source) &&
+    /\b(?:server_name|proxy_pass|upstream)\b[^;]*$/i.test(linePrefix)
+  ) {
+    return true
+  }
+
+  const keyMatch = linePrefix.match(DOMAIN_KEY_PATTERN)
+  return Boolean(keyMatch && (!CODE_SOURCE_PATTERN.test(source) || keyMatch[1]))
+}
+
 const uniqueBy = <T>(items: T[], key: (item: T) => string): T[] => {
   const seen = new Set<string>()
   return items.filter((item) => {
@@ -56,8 +84,11 @@ export const extractDomainCandidates = (
 
   for (const match of content.matchAll(DOMAIN_PATTERN)) {
     const value = match[1]?.toLowerCase()
+    const hasProtocol = /^https?:\/\//i.test(match[0])
     if (
       !value ||
+      (!hasProtocol &&
+        !isLikelyBareDomain(content, match.index ?? 0, source)) ||
       NOISE_DOMAINS.has(value) ||
       blocked.has(value) ||
       value.endsWith('.example.com') ||
