@@ -17,8 +17,17 @@ export const formatProjectInfo = (
   config: ZhaoConfig,
 ): string => {
   const lines = [
-    `名称: ${project.name} [自动扫描]`,
+    `名称: ${project.name} [${project.targetKey ? '手动' : '自动扫描'}]`,
     `ID: ${project.id} [自动扫描]`,
+    ...(project.repositoryId && project.repositoryName
+      ? [
+          `所属仓库: ${project.repositoryName} (${project.repositoryId}) [自动扫描]`,
+        ]
+      : []),
+    ...(project.targetKey ? [`Target: ${project.targetKey} [手动]`] : []),
+    ...(project.relativePath
+      ? [`相对路径: ${project.relativePath} [手动]`]
+      : []),
     `路径: ${project.path} [自动扫描]`,
     `Remote: ${project.remote} [自动扫描]`,
     `Group: ${project.group || '无'} [自动扫描]`,

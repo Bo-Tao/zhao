@@ -26,6 +26,7 @@ interface ProjectOptionSource {
   name: string
   description: string
   path: string
+  repositoryName?: string
 }
 
 interface FittedText {
@@ -82,7 +83,8 @@ export const formatProjectOption = (
       ? Math.floor(columns)
       : DEFAULT_TERMINAL_COLUMNS) - PROJECT_OPTION_PADDING,
   )
-  const description = project.description.trim()
+  const description =
+    project.repositoryName?.trim() || project.description.trim()
   const fullLabel = `${project.name}${
     description ? `${PROJECT_OPTION_SEPARATOR}${description}` : ''
   }`

@@ -105,6 +105,78 @@ describe('四层数据合并', () => {
       issue: '索引已损坏',
     })
   })
+
+  it('把 monorepo targets 展开为拥有独立 CI 链接的可搜索项目', () => {
+    const index: ZhaoIndex = {
+      version: 1,
+      generatedAt: '2026-08-12T00:00:00.000Z',
+      projects: [
+        {
+          id: 'git.example.com/team/platform',
+          name: 'platform',
+          path: '/work/platform',
+          remote: 'git@git.example.com:team/platform.git',
+          group: 'team',
+          description: '前端平台',
+          keywords: ['pnpm'],
+          stack: ['typescript'],
+          domains: [],
+          scannedAt: '2026-08-12T00:00:00.000Z',
+        },
+      ],
+    }
+    const projects: ZhaoProjectsFile = {
+      'git.example.com/team/platform': {
+        keywords: ['前端'],
+        links: {
+          'ci-test': 'https://build.example.com/platform/test',
+        },
+        targets: {
+          'admin-web': {
+            name: '运营后台',
+            path: 'apps/admin-web',
+            aliases: ['后台'],
+            keywords: ['运营'],
+            domains: [{ value: 'admin.example.com', type: 'page' }],
+            links: {
+              'ci-test': 'https://build.example.com/admin/test',
+            },
+          },
+        },
+      },
+    }
+
+    const merged = mergeProjectData(index, projects)
+
+    expect(merged).toHaveLength(2)
+    expect(merged[1]).toMatchObject({
+      id: 'git.example.com/team/platform#admin-web',
+      repositoryId: 'git.example.com/team/platform',
+      repositoryName: 'platform',
+      targetKey: 'admin-web',
+      relativePath: 'apps/admin-web',
+      name: '运营后台',
+      path: '/work/platform/apps/admin-web',
+      aliases: ['后台'],
+      keywords: ['pnpm'],
+      manualKeywords: ['前端', '运营'],
+      stack: ['typescript'],
+      domains: [
+        {
+          value: 'admin.example.com',
+          type: 'page',
+          source: 'manual',
+          confidence: 1,
+        },
+      ],
+      links: {
+        'ci-test': 'https://build.example.com/admin/test',
+      },
+    })
+    expect(merged[1]?.links['ci-test']).not.toBe(
+      'https://build.example.com/platform/test',
+    )
+  })
 })
 
 describe('projects.yaml 项目 key 同步', () => {
@@ -196,6 +268,50 @@ describe('projects.yaml 项目 key 同步', () => {
     await expect(syncProjectsFile([], paths)).resolves.toBe(true)
     await expect(readFile(paths.projects, 'utf8')).resolves.toBe('{}\n')
   })
+
+  it('拒绝缺少必填字段的 monorepo target', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'zhao-project-targets-'))
+    const paths = getStorePaths(directory)
+    await writeFile(
+      paths.projects,
+      [
+        'git.example.com/team/platform:',
+        '  targets:',
+        '    admin-web:',
+        '      path: apps/admin-web',
+        '',
+      ].join('\n'),
+    )
+
+    await expect(loadProjectsFile(paths)).rejects.toThrow(
+      'projects.yaml 无法解析',
+    )
+  })
+
+  it.each(['.', '../admin-web', '/work/admin-web', 'C:\\work\\admin-web'])(
+    '拒绝不安全或与仓库根重叠的 target 路径 %s',
+    async (targetPath) => {
+      const directory = await mkdtemp(
+        join(tmpdir(), 'zhao-project-target-path-'),
+      )
+      const paths = getStorePaths(directory)
+      await writeFile(
+        paths.projects,
+        [
+          'git.example.com/team/platform:',
+          '  targets:',
+          '    admin-web:',
+          '      name: 运营后台',
+          `      path: ${targetPath}`,
+          '',
+        ].join('\n'),
+      )
+
+      await expect(loadProjectsFile(paths)).rejects.toThrow(
+        'projects.yaml 无法解析',
+      )
+    },
+  )
 
   it('只追加缺失 key，重复同步幂等且无新增项时不重写原文件', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'zhao-project-sync-'))

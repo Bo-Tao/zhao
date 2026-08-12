@@ -31,12 +31,21 @@ export interface ManualDomain {
   type: DomainType
 }
 
-export interface ManualProjectData {
+export interface ManualProjectMetadata {
   aliases?: string[]
   domains?: ManualDomain[]
   keywords?: string[]
   links?: Record<string, string>
   blockedDomains?: string[]
+}
+
+export interface ManualTargetData extends ManualProjectMetadata {
+  name: string
+  path: string
+}
+
+export interface ManualProjectData extends ManualProjectMetadata {
+  targets?: Record<string, ManualTargetData>
 }
 
 export type ZhaoProjectsFile = Record<string, ManualProjectData>
@@ -65,6 +74,10 @@ export interface MergedProject extends IndexedProject {
   aliases: string[]
   manualKeywords: string[]
   links: Record<string, string>
+  repositoryId?: string
+  repositoryName?: string
+  targetKey?: string
+  relativePath?: string
 }
 
 export interface RankedProject {

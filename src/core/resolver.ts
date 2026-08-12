@@ -1,5 +1,13 @@
 import { stat } from 'node:fs/promises'
-import { basename, dirname, join, parse } from 'node:path'
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  parse,
+  relative,
+  sep,
+} from 'node:path'
 
 import { readGitRemote } from './gitconfig.js'
 import { rankProjects } from './rank.js'
@@ -21,6 +29,16 @@ const pathExists = async (path: string): Promise<boolean> => {
   } catch {
     return false
   }
+}
+
+const isWithinPath = (parent: string, candidate: string): boolean => {
+  const relativePath = relative(parent, candidate)
+  return (
+    relativePath === '' ||
+    (relativePath !== '..' &&
+      !relativePath.startsWith(`..${sep}`) &&
+      !isAbsolute(relativePath))
+  )
 }
 
 export const findGitRoot = async (
@@ -49,7 +67,13 @@ const currentDirectoryProject = async (
   }
   const remote = await readGitRemote(root)
   const id = remoteToProjectId(remote)
-  const indexed = projects.find((project) => project.id === id)
+  const indexed = projects
+    .filter(
+      (project) =>
+        (project.id === id || project.repositoryId === id) &&
+        isWithinPath(project.path, cwd),
+    )
+    .sort((left, right) => right.path.length - left.path.length)[0]
   if (indexed) {
     return indexed
   }

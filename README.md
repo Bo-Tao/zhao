@@ -215,6 +215,10 @@ zhao ci '学习报告'
 zhao ci test '学习报告'
 zhao ci prod '学习报告'
 
+# monorepo target 与普通项目一样通过名称或别名查询
+zhao ci test '运营后台'
+zhao ci prod '学生端'
+
 # 用于脚本或复制
 zhao ci prod '学习报告' --print
 zhao ci test '学习报告' --copy
@@ -229,6 +233,17 @@ zhao ci test '学习报告' --copy
 首个位置参数只有在值为 `test` 或 `prod` 时才会被解释为环境，否则它就是项目查询。URL 读取解析：
 
 `projects.yaml` 中该项目的 `links.ci-test` 或 `links.ci-prod`。
+
+monorepo 中每个 `targets` 项拥有独立的 CI 链接。进入 target 的 `path`
+目录或其任意子目录后，不传 query 也会自动使用该 target：
+
+```bash
+cd frontend-platform/apps/admin-web
+zhao ci test
+```
+
+target 不会继承父仓库的 CI 链接，避免误打开其他子项目的构建页面；没有手动
+链接时仍按普通项目规则尝试 `config.yaml` 中的 CI 模板。
 
 与 `browse` 一样，`--copy/-c` 可和 `--print/-p` 组合，做到复制并输出 URL、但不打开页面。
 
@@ -351,6 +366,8 @@ scanDepth: 5
 
 手动元数据以规范化后的 Git remote 路径作为项目 ID。这样即使本地目录移动，或不同成员将仓库克隆到不同位置，配置仍能对应同一个项目。
 
+普通多仓库项目保持一个 Git 仓库对应一个顶层配置：
+
 ```yaml
 git.example.com/group/name:
   aliases:
@@ -369,16 +386,56 @@ git.example.com/group/name:
     - cdn.example.com
 ```
 
+monorepo 在仓库配置中使用**手动维护**的 `targets`。target key（例如
+`admin-web`）是稳定标识，`path` 是相对于仓库根目录的路径；移动子项目时只需
+修改 `path`，不要修改 target key：
+
+```yaml
+git.example.com/group/frontend-platform:
+  aliases:
+    - 前端平台
+  keywords:
+    - frontend
+    - monorepo
+  targets:
+    admin-web:
+      name: 运营后台
+      path: apps/admin-web
+      aliases:
+        - 后台
+      keywords:
+        - 运营
+      domains:
+        - value: admin.example.com
+          type: page
+      links:
+        ci-test: https://build.example.com/frontend-platform/admin-web/test
+        ci-prod: https://build.example.com/frontend-platform/admin-web/prod
+
+    student-web:
+      name: 学生端
+      path: apps/student-web
+      aliases:
+        - 学生中心
+      links:
+        ci-test: https://build.example.com/frontend-platform/student-web/test
+        ci-prod: https://build.example.com/frontend-platform/student-web/prod
+```
+
+`zhao scan` 只自动发现 Git 仓库，不自动创建或删除 `targets`。workspace 中可能
+同时包含应用、组件库和工具包，Zhao 无法仅根据目录可靠判断哪些子项目拥有独立
+构建，因此 target 的 key、名称、路径和 CI 链接均由用户维护。
+
 建议优先使用 `zhao tag` 修改手动元数据；需要批量调整时再使用 `zhao edit`。
 
 ### 数据文件
 
-| 文件            | 维护者                  | 用途                                                           |
-| --------------- | ----------------------- | -------------------------------------------------------------- |
-| `config.yaml`   | 用户                    | 扫描根目录、CI 模板、选择器和扫描深度                          |
-| `projects.yaml` | `zhao scan`、用户或团队 | 自动补齐项目 key；用户维护别名、关键词、域名、链接和域名黑名单 |
-| `index.json`    | `zhao scan`             | 自动生成的项目索引，可随时删除后重建                           |
-| `state.json`    | 程序                    | 项目使用次数和最近使用时间，用于排序                           |
+| 文件            | 维护者                  | 用途                                                                              |
+| --------------- | ----------------------- | --------------------------------------------------------------------------------- |
+| `config.yaml`   | 用户                    | 扫描根目录、CI 模板、选择器和扫描深度                                             |
+| `projects.yaml` | `zhao scan`、用户或团队 | 自动补齐仓库 key；用户维护别名、关键词、域名、链接、域名黑名单和 monorepo targets |
+| `index.json`    | `zhao scan`             | 自动生成的项目索引，可随时删除后重建                                              |
+| `state.json`    | 程序                    | 项目使用次数和最近使用时间，用于排序                                              |
 
 ## 扫描内容
 

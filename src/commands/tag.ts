@@ -4,7 +4,11 @@ import {
   loadProjectsFile,
   saveProjectsFile,
 } from '../core/store.js'
-import type { ManualProjectData } from '../core/types.js'
+import type {
+  ManualProjectMetadata,
+  MergedProject,
+  ZhaoProjectsFile,
+} from '../core/types.js'
 import { ensureOnboarded } from '../middleware/onboard.js'
 import type { DefineCommand } from './types.js'
 
@@ -34,11 +38,11 @@ const normalizeLinkValue = (value: RawTagValue): string | undefined => {
   return lastValue?.trim() || undefined
 }
 
-export const applyProjectTags = (
-  current: ManualProjectData,
+export const applyProjectTags = <T extends ManualProjectMetadata>(
+  current: T,
   tags: ProjectTags,
-): ManualProjectData => {
-  const result: ManualProjectData = { ...current }
+): T => {
+  const result: ManualProjectMetadata = { ...current }
   if (tags.aliases.length > 0) {
     result.aliases = unique([...(current.aliases ?? []), ...tags.aliases])
   }
@@ -72,7 +76,29 @@ export const applyProjectTags = (
       result.links['ci-prod'] = tags.ciProd
     }
   }
-  return result
+  return { ...current, ...result }
+}
+
+export const applyStoredProjectTags = (
+  projectsFile: ZhaoProjectsFile,
+  project: MergedProject,
+  tags: ProjectTags,
+): void => {
+  if (project.repositoryId && project.targetKey) {
+    const repository = projectsFile[project.repositoryId]
+    const targets = repository?.targets
+    const target = targets?.[project.targetKey]
+    if (!targets || !target) {
+      throw new Error(`找不到 target 配置：${project.id}`)
+    }
+    targets[project.targetKey] = applyProjectTags(target, tags)
+    return
+  }
+
+  projectsFile[project.id] = applyProjectTags(
+    projectsFile[project.id] ?? {},
+    tags,
+  )
 }
 
 export default (defineCommand: DefineCommand) =>
@@ -138,10 +164,7 @@ export default (defineCommand: DefineCommand) =>
       const project = await resolveStoredProject(args.project)
       const paths = getStorePaths()
       const projectsFile = await loadProjectsFile(paths)
-      projectsFile[project.id] = applyProjectTags(
-        projectsFile[project.id] ?? {},
-        tags,
-      )
+      applyStoredProjectTags(projectsFile, project, tags)
       await saveProjectsFile(projectsFile, paths)
       process.stderr.write(`已更新 ${project.name} 的手动元数据。\n`)
     },

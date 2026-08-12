@@ -47,7 +47,7 @@ const selectWithFzf = async (
       projects
         .map(
           ({ project, reason }) =>
-            `${project.id}\t${project.name} · ${project.description || '无描述'}\t${reason}`,
+            `${project.id}\t${project.name} · ${project.repositoryName || project.description || '无描述'}\t${reason}`,
         )
         .join('\n'),
     )

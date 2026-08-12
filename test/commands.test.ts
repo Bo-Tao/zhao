@@ -232,6 +232,29 @@ describe('info 命令', () => {
     expect(output).not.toContain('ci-test:  [手动]')
     expect(output).not.toContain('ci-prod:  [手动]')
   })
+
+  it('展示 monorepo target 的所属仓库和相对路径', () => {
+    const output = formatProjectInfo(
+      {
+        ...project,
+        id: 'git.100tal.com/group/platform#admin-web',
+        name: '运营后台',
+        path: '/work/platform/apps/admin-web',
+        repositoryId: 'git.100tal.com/group/platform',
+        repositoryName: 'platform',
+        targetKey: 'admin-web',
+        relativePath: 'apps/admin-web',
+      },
+      { scanRoots: ['/work'] },
+    )
+
+    expect(output).toContain('名称: 运营后台 [手动]')
+    expect(output).toContain(
+      '所属仓库: platform (git.100tal.com/group/platform) [自动扫描]',
+    )
+    expect(output).toContain('Target: admin-web [手动]')
+    expect(output).toContain('相对路径: apps/admin-web [手动]')
+  })
 })
 
 describe('config 命令', () => {

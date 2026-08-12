@@ -74,4 +74,46 @@ describe('resolveProject', () => {
       path: repo,
     })
   })
+
+  it('无 query 时优先识别当前目录所在的 monorepo target', async ({ task }) => {
+    const root = join(tmpdir(), `resolver-${task.id}-${Date.now()}-monorepo`)
+    const repo = join(root, 'platform')
+    const targetRoot = join(repo, 'apps', 'admin-web')
+    const nested = join(targetRoot, 'src', 'pages')
+    await mkdir(join(repo, '.git'), { recursive: true })
+    await mkdir(nested, { recursive: true })
+    await writeFile(
+      join(repo, '.git', 'config'),
+      '[remote "origin"]\n  url = git@git.100tal.com:group/platform.git\n',
+    )
+    const repository: MergedProject = {
+      ...project,
+      id: 'git.100tal.com/group/platform',
+      name: 'platform',
+      path: repo,
+      remote: 'git@git.100tal.com:group/platform.git',
+    }
+    const target: MergedProject = {
+      ...repository,
+      id: 'git.100tal.com/group/platform#admin-web',
+      name: '运营后台',
+      path: targetRoot,
+      repositoryId: repository.id,
+      repositoryName: repository.name,
+      targetKey: 'admin-web',
+      relativePath: 'apps/admin-web',
+    }
+
+    const resolved = await resolveProject(undefined, {
+      projects: [repository, target],
+      cwd: nested,
+      state: { version: 1, entries: {} },
+      selectProject: async () => {
+        throw new Error('当前位置 target 不应出现选择器')
+      },
+      recordUse: async () => undefined,
+    })
+
+    expect(resolved.id).toBe(target.id)
+  })
 })

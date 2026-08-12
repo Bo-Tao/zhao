@@ -1,9 +1,11 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, isAbsolute, join, win32 } from 'node:path'
 
 import type {
   ManualProjectData,
+  ManualProjectMetadata,
+  ManualTargetData,
   MergedProject,
   ZhaoConfig,
   ZhaoIndex,
@@ -23,6 +25,13 @@ const isStringRecord = (value: unknown): value is Record<string, string> =>
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0
+
+const isSafeRelativePath = (value: unknown): value is string =>
+  isNonEmptyString(value) &&
+  value !== '.' &&
+  !isAbsolute(value) &&
+  !win32.isAbsolute(value) &&
+  !value.split(/[\\/]/).includes('..')
 
 const isDomainType = (value: unknown): boolean =>
   value === 'api' || value === 'page' || value === 'guess'
@@ -78,23 +87,35 @@ const isConfig = (value: unknown): value is ZhaoConfig =>
       (value.ciTemplates.prod === undefined ||
         typeof value.ciTemplates.prod === 'string')))
 
+const isManualProjectMetadata = (value: unknown): boolean =>
+  isRecord(value) &&
+  (value.aliases === undefined || isStringArray(value.aliases)) &&
+  (value.keywords === undefined || isStringArray(value.keywords)) &&
+  (value.blockedDomains === undefined || isStringArray(value.blockedDomains)) &&
+  (value.links === undefined || isStringRecord(value.links)) &&
+  (value.domains === undefined ||
+    (Array.isArray(value.domains) &&
+      value.domains.every(
+        (domain) =>
+          isRecord(domain) &&
+          isNonEmptyString(domain.value) &&
+          isDomainType(domain.type),
+      )))
+
 const isProjectsFile = (value: unknown): value is ZhaoProjectsFile =>
   isRecord(value) &&
   Object.values(value).every(
     (project) =>
+      isManualProjectMetadata(project) &&
       isRecord(project) &&
-      (project.aliases === undefined || isStringArray(project.aliases)) &&
-      (project.keywords === undefined || isStringArray(project.keywords)) &&
-      (project.blockedDomains === undefined ||
-        isStringArray(project.blockedDomains)) &&
-      (project.links === undefined || isStringRecord(project.links)) &&
-      (project.domains === undefined ||
-        (Array.isArray(project.domains) &&
-          project.domains.every(
-            (domain) =>
-              isRecord(domain) &&
-              isNonEmptyString(domain.value) &&
-              isDomainType(domain.type),
+      (project.targets === undefined ||
+        (isRecord(project.targets) &&
+          Object.values(project.targets).every(
+            (target) =>
+              isManualProjectMetadata(target) &&
+              isRecord(target) &&
+              isNonEmptyString(target.name) &&
+              isSafeRelativePath(target.path),
           ))),
   )
 
@@ -391,37 +412,79 @@ export const saveState = async (
 
 const unique = (values: string[]): string[] => [...new Set(values)]
 
+const mergeDomains = (
+  automaticDomains: MergedProject['domains'],
+  manual: ManualProjectMetadata,
+): MergedProject['domains'] => {
+  const blocked = new Set(
+    (manual.blockedDomains ?? []).map((domain) => domain.toLowerCase()),
+  )
+  const manualDomains = (manual.domains ?? []).map((domain) => ({
+    ...domain,
+    source: 'manual',
+    confidence: 1,
+  }))
+  const manualDomainValues = new Set(
+    manualDomains.map((domain) => domain.value.toLowerCase()),
+  )
+  return [
+    ...manualDomains,
+    ...automaticDomains.filter(
+      (domain) =>
+        !blocked.has(domain.value.toLowerCase()) &&
+        !manualDomainValues.has(domain.value.toLowerCase()),
+    ),
+  ]
+}
+
+const mergeRepository = (
+  project: ZhaoIndex['projects'][number],
+  manual: ManualProjectData,
+): MergedProject => ({
+  ...project,
+  aliases: unique(manual.aliases ?? []),
+  manualKeywords: unique(manual.keywords ?? []),
+  keywords: unique(project.keywords),
+  domains: mergeDomains(project.domains, manual),
+  links: manual.links ?? {},
+})
+
+const mergeTarget = (
+  project: ZhaoIndex['projects'][number],
+  parentManual: ManualProjectData,
+  targetKey: string,
+  target: ManualTargetData,
+): MergedProject => ({
+  ...project,
+  id: `${project.id}#${targetKey}`,
+  name: target.name,
+  path: join(project.path, target.path),
+  aliases: unique(target.aliases ?? []),
+  manualKeywords: unique([
+    ...(parentManual.keywords ?? []),
+    ...(target.keywords ?? []),
+  ]),
+  keywords: unique(project.keywords),
+  domains: mergeDomains([], target),
+  links: target.links ?? {},
+  repositoryId: project.id,
+  repositoryName: project.name,
+  targetKey,
+  relativePath: target.path,
+})
+
 export const mergeProjectData = (
   index: ZhaoIndex,
   projectsFile: ZhaoProjectsFile,
 ): MergedProject[] =>
-  index.projects.map((project) => {
+  index.projects.flatMap((project) => {
     const manual = projectsFile[project.id] ?? {}
-    const blocked = new Set(
-      (manual.blockedDomains ?? []).map((domain) => domain.toLowerCase()),
-    )
-    const manualDomains = (manual.domains ?? []).map((domain) => ({
-      ...domain,
-      source: 'manual',
-      confidence: 1,
-    }))
-    const manualDomainValues = new Set(
-      manualDomains.map((domain) => domain.value.toLowerCase()),
-    )
-    const automaticDomains = project.domains.filter(
-      (domain) =>
-        !blocked.has(domain.value.toLowerCase()) &&
-        !manualDomainValues.has(domain.value.toLowerCase()),
-    )
-
-    return {
-      ...project,
-      aliases: unique(manual.aliases ?? []),
-      manualKeywords: unique(manual.keywords ?? []),
-      keywords: unique(project.keywords),
-      domains: [...manualDomains, ...automaticDomains],
-      links: manual.links ?? {},
-    }
+    return [
+      mergeRepository(project, manual),
+      ...Object.entries(manual.targets ?? {}).map(([targetKey, target]) =>
+        mergeTarget(project, manual, targetKey, target),
+      ),
+    ]
   })
 
 export const loadMergedProjects = async (

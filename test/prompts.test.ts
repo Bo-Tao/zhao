@@ -83,4 +83,20 @@ describe('项目选择项', () => {
     expect(`${option.label} (${option.hint})`).not.toContain('/Users/')
     expect(option.hint).toBe('自动关键词匹配 react')
   })
+
+  it('monorepo target 使用仓库名区分选择项', () => {
+    const target = {
+      name: '运营后台',
+      description: '所有子项目共享的仓库描述',
+      path: '/work/platform/apps/admin-web',
+      repositoryName: 'platform',
+    } as Parameters<typeof formatProjectOption>[0] & {
+      repositoryName: string
+    }
+
+    expect(formatProjectOption(target, '别名精确匹配 后台', 80)).toEqual({
+      label: '运营后台 · platform',
+      hint: '别名精确匹配 后台',
+    })
+  })
 })
