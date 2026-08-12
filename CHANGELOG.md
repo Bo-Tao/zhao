@@ -2,6 +2,25 @@
 
 本项目的主要变更都记录在此文件中。版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.0] - 2026-08-12
+
+### 新增
+
+- `projects.yaml` 支持在 Git 仓库下手动维护 `targets`，为 monorepo 中可独立构建的子项目配置名称、相对路径、别名、关键词、域名和 CI 链接。
+- monorepo target 会以独立项目参与搜索、排序和使用频次记录，并使用 `仓库 ID#target key` 作为稳定标识。
+- 在 target 目录或其任意子目录执行命令时，Zhao 会按最长路径自动识别当前 target，无需额外提供查询参数。
+
+### 改进
+
+- `zhao ci` 为每个 target 解析独立的测试和生产构建地址，且不会误继承父仓库的 CI 链接。
+- `zhao tag` 可将别名、关键词、域名和 CI 链接正确写回父仓库的 `targets.<key>` 配置。
+- `zhao info`、内置项目选择器和 fzf 选择器会展示 target 所属仓库，便于区分 monorepo 中的同名子项目。
+- 加强 target 路径校验，拒绝绝对路径、越出仓库的路径和与仓库根目录重叠的路径。
+
+### 文档
+
+- 补充 multiple repo 与 monorepo 的 `projects.yaml` 配置示例，并明确 `targets` 由用户手动维护，`zhao scan` 不会自动生成或删除。
+
 ## [0.3.0] - 2026-07-24
 
 ### 改进
@@ -27,5 +46,6 @@
 - 没有新项目时不再重写 `projects.yaml`，并以空行分隔项目条目，减少无意义变更并提升可读性。
 - `zhao info` 不再显示自动生成但尚未配置的空链接。
 
+[0.4.0]: https://github.com/Bo-Tao/zhao/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/Bo-Tao/zhao/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/Bo-Tao/zhao/releases/tag/0.2.0
