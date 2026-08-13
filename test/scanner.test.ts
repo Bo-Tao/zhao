@@ -46,6 +46,32 @@ describe('扫描元数据', () => {
     expect(domains).toEqual([])
   })
 
+  it('不把 JavaScript 成员访问和资源文件名识别为域名', () => {
+    const domains = extractDomainCandidates(
+      [
+        'js.configs.recommended,',
+        "...pluginVue.configs['flat/vue2-recommended'],",
+        'const env = process.env.NODE_ENV',
+        "const envPath = path.resolve(__dirname, '.env.production')",
+        "entry: { main: './src/main.js' },",
+        "template: './index.html',",
+        "resolve: { alias: { vue$: require.resolve('vue/dist/vue.esm.js') } },",
+        "hostname: 'cms-stage.mofaxiao.com',",
+      ].join('\n'),
+      'rspack.config.js',
+      [],
+    )
+
+    expect(domains).toEqual([
+      {
+        value: 'cms-stage.mofaxiao.com',
+        type: 'api',
+        source: 'rspack.config.js',
+        confidence: 0.9,
+      },
+    ])
+  })
+
   it('根据依赖推断技术栈', () => {
     expect(
       inferStack({

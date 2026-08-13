@@ -68,10 +68,69 @@ describe('list 命令', () => {
     expect(JSON.parse(output)).toEqual([project])
   })
 
-  it('文本列表包含名称、路径和描述', () => {
-    expect(formatProjectList([project], false)).toContain(
-      'repo\t/work/repo\t报告 H5',
+  it('文本列表以表格对齐名称、路径和描述', () => {
+    expect(formatProjectList([project], false)).toBe(
+      [
+        '┌──────┬────────────┬─────────┐',
+        '│ 名称 │ 路径       │ 描述    │',
+        '├──────┼────────────┼─────────┤',
+        '│ repo │ /work/repo │ 报告 H5 │',
+        '└──────┴────────────┴─────────┘',
+        '',
+      ].join('\n'),
     )
+  })
+
+  it('终端较窄时截断过长单元格', () => {
+    const output = formatProjectList(
+      [
+        {
+          ...project,
+          name: '超级长的项目名称',
+          path: '/work/group/really-long-project-name',
+          description: '这是一段很长的项目描述',
+        },
+      ],
+      false,
+      40,
+    )
+
+    expect(output).toBe(
+      [
+        '┌────────────┬────────────┬────────────┐',
+        '│ 名称       │ 路径       │ 描述       │',
+        '├────────────┼────────────┼────────────┤',
+        '│ 超级长的…  │ /work/gro… │ 这是一段…  │',
+        '└────────────┴────────────┴────────────┘',
+        '',
+      ].join('\n'),
+    )
+  })
+
+  it('没有项目时仍显示表头', () => {
+    const output = formatProjectList([], false)
+    expect(output).toContain('│ 名称 │ 路径 │ 描述 │')
+    expect(output.trimEnd().split('\n')).toHaveLength(4)
+  })
+
+  it('每条项目记录之间显示横向分隔线', () => {
+    const output = formatProjectList(
+      [
+        project,
+        {
+          ...project,
+          id: 'git.100tal.com/group/admin',
+          name: 'admin',
+          path: '/work/admin',
+          description: '管理后台',
+        },
+      ],
+      false,
+    )
+    const lines = output.trimEnd().split('\n')
+
+    expect(lines[4]).toMatch(/^├─+┼─+┼─+┤$/)
+    expect(lines).toHaveLength(7)
   })
 })
 
