@@ -279,17 +279,19 @@ describe('info 命令', () => {
       },
     )
 
-    expect(output).toContain('别名: 业务仓 [手动]')
-    expect(output).toContain('关键词: report [自动扫描]')
-    expect(output).toContain('关键词: 报告 [手动]')
-    expect(output).toContain('app.example.com [手动]')
-    expect(output).toContain('api.example.com [自动扫描: src/api/client.ts]')
-    expect(output).toContain('example.com [猜测: api.example.com]')
-    expect(output).toContain(
-      'ci-test: https://build.example.com/group/repo [模板]',
-    )
-    expect(output).not.toContain('ci-test:  [手动]')
-    expect(output).not.toContain('ci-prod:  [手动]')
+    expect(output).toContain('基本信息\n┌')
+    expect(output).toContain('\n标记\n┌')
+    expect(output).toContain('\n域名\n┌')
+    expect(output).toContain('\n链接\n┌')
+    expect(output).toMatch(/│ 别名\s+│ 业务仓\s+│ 手动\s+│/)
+    expect(output).toMatch(/│ 关键词\s+│ report\s+│ 自动扫描\s+│/)
+    expect(output).toMatch(/│ 关键词\s+│ 报告\s+│ 手动\s+│/)
+    expect(output).toContain('app.example.com')
+    expect(output).toContain('自动扫描: src/api/client.ts')
+    expect(output).toContain('猜测: api.example.com')
+    expect(output).toContain('https://build.example.com/group/repo')
+    expect(output).toMatch(/│ ci-test\s+│ .* │ 模板\s+│/)
+    expect(output).not.toContain('ci-prod')
   })
 
   it('展示 monorepo target 的所属仓库和相对路径', () => {
@@ -307,12 +309,34 @@ describe('info 命令', () => {
       { scanRoots: ['/work'] },
     )
 
-    expect(output).toContain('名称: 运营后台 [手动]')
-    expect(output).toContain(
-      '所属仓库: platform (git.100tal.com/group/platform) [自动扫描]',
+    expect(output).toMatch(/│ 名称\s+│ 运营后台\s+│ 手动\s+│/)
+    expect(output).toContain('platform (git.100tal.com/group/platform)')
+    expect(output).toMatch(/│ Target\s+│ admin-web\s+│ 手动\s+│/)
+    expect(output).toMatch(/│ 相对路径\s+│ apps\/admin-web\s+│ 手动\s+│/)
+  })
+
+  it('终端较窄时换行长 URL 而不丢失信息', () => {
+    const output = formatProjectInfo(
+      {
+        ...project,
+        links: {
+          'ci-test':
+            'https://build.example.com/very/long/path/to/report?id=123456',
+        },
+      },
+      { scanRoots: ['/work'] },
+      42,
     )
-    expect(output).toContain('Target: admin-web [手动]')
-    expect(output).toContain('相对路径: apps/admin-web [手动]')
+
+    expect(output).not.toContain('…')
+    expect(output).toContain('https://build.example')
+    expect(output).toContain('report?id=123456')
+    expect(
+      output
+        .split('\n')
+        .filter((line) => line.startsWith('│') || line.startsWith('┌'))
+        .every((line) => line.length <= 42),
+    ).toBe(true)
   })
 })
 

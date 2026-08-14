@@ -291,6 +291,8 @@ zhao list --json
 zhao info '学习报告'
 ```
 
+输出会按“基本信息 / 标记 / 域名 / 链接”分区显示为表格，并根据终端宽度自动换行长路径和 URL。
+
 ### `zhao edit`
 
 使用 `$EDITOR` 打开 `projects.yaml`：

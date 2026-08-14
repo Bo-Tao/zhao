@@ -51,8 +51,8 @@ describe('v2 构建产物', () => {
 
     const info = run(['info', '报告'])
     expect(info.status).toBe(0)
-    expect(info.stdout).toContain('别名: 报告 [手动]')
-    expect(info.stdout).toContain('[模板]')
+    expect(info.stdout).toMatch(/│ 别名\s+│ 报告\s+│ 手动\s+│/)
+    expect(info.stdout).toMatch(/│ ci-test\s+│ .* │ 模板\s+│/)
 
     expect(
       run([
