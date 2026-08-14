@@ -1,43 +1,27 @@
-# zhao v0.4.0
+# zhao v0.5.0
 
-Zhao 现在支持为 monorepo 中拥有独立构建地址的子项目配置 `targets`，同时保持现有 multiple repo 配置完全兼容。
+这个版本重点优化终端信息展示，并减少源码扫描中的域名误报。
 
-## 新功能
+## 终端展示改进
 
-- 在仓库配置下手动声明 `targets`，为每个可部署子项目设置稳定 key、名称、相对路径、别名、关键词、域名和 CI 链接。
-- target 作为独立项目参与搜索、选择和使用频次排序。
-- 进入 target 目录或其子目录后，`zhao ci` 等命令可自动识别对应 target。
+- `zhao list` 现在使用带表头、边框和行分隔线的对齐表格展示名称、路径与描述。
+- 表格会根据终端宽度自动收缩并截断过长内容，中文、Emoji 和组合字符也能保持正确对齐。
+- `zhao info` 按“基本信息 / 标记 / 域名 / 链接”分区展示表格，长路径和 URL 会换行显示，不会因终端较窄而丢失信息。
+- 单元格中的换行符等控制字符会被归一化，避免破坏表格布局。
 
-## 行为与可靠性改进
+## 域名扫描修复
 
-- target 使用独立 CI 链接，不继承父仓库构建地址，避免打开错误的构建页面。
-- `zhao tag` 会将手动元数据写回嵌套的 `targets.<key>`，不会创建错误的顶层项目。
-- `zhao info` 和项目选择器会显示 target 所属仓库。
-- target 的 `path` 必须是安全的仓库内相对路径。
+- 不再将 `js.configs.recommended`、`process.env.NODE_ENV`、`main.js` 等 JavaScript 成员访问、环境变量访问和资源文件名识别为域名。
+- HTTP(S) URL 仍会直接识别；`.env`、Nginx 配置及明确的 URL、host、domain、endpoint 等配置项中的裸域名仍受支持。
 
-## 配置示例
+## 兼容性
 
-```yaml
-git.example.com/group/frontend-platform:
-  targets:
-    admin-web:
-      name: 运营后台
-      path: apps/admin-web
-      aliases:
-        - 后台
-      links:
-        ci-test: https://build.example.com/frontend-platform/admin-web/test
-        ci-prod: https://build.example.com/frontend-platform/admin-web/prod
-```
-
-`targets` 由用户手动维护。`zhao scan` 仍只负责发现 Git 仓库，不会自动创建或删除 target。
+- `zhao list --json` 的数据结构和输出保持不变。
+- 现有配置文件无需迁移。
 
 ## 升级
 
 ```bash
-npm install --global @botaoxyz/zhao@0.4.0
+npm install --global @botaoxyz/zhao@0.5.0
 zhao --version
-zhao scan
 ```
-
-现有 multiple repo 的 `projects.yaml` 无需修改；只有 monorepo 需要按需新增 `targets`。

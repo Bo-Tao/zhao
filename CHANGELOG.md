@@ -2,6 +2,23 @@
 
 本项目的主要变更都记录在此文件中。版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.0] - 2026-08-14
+
+### 改进
+
+- `zhao list` 默认以带表头、边框和行分隔线的表格展示项目，并根据终端宽度自动截断过长的名称、路径和描述。
+- `zhao info` 按“基本信息 / 标记 / 域名 / 链接”分区展示响应式表格；长路径和 URL 会自动换行，避免信息丢失。
+- 表格宽度按中文、Emoji 和组合字符的实际终端显示宽度计算，并会清理单元格中的控制字符，提升不同终端下的对齐稳定性。
+
+### 修复
+
+- 收紧源码中的裸域名识别规则，不再将 JavaScript 成员访问、环境变量访问和资源文件名误判为域名。
+- 继续支持从 HTTP(S) URL、`.env`、Nginx 配置和明确的 URL、host、domain 等配置项中识别真实域名。
+
+### 文档
+
+- 更新 `zhao list` 和 `zhao info` 的输出格式说明。
+
 ## [0.4.0] - 2026-08-12
 
 ### 新增
@@ -46,6 +63,7 @@
 - 没有新项目时不再重写 `projects.yaml`，并以空行分隔项目条目，减少无意义变更并提升可读性。
 - `zhao info` 不再显示自动生成但尚未配置的空链接。
 
+[0.5.0]: https://github.com/Bo-Tao/zhao/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/Bo-Tao/zhao/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/Bo-Tao/zhao/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/Bo-Tao/zhao/releases/tag/0.2.0
