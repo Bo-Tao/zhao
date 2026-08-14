@@ -2,7 +2,7 @@ import type { CommandDef } from 'citty'
 
 const meta = {
   name: 'zhao',
-  version: '0.4.0',
+  version: '0.5.0',
   description: '按域名、关键词和模块快速检索本地项目',
 }
 
