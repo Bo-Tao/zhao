@@ -2,7 +2,7 @@ import type { CommandDef } from 'citty'
 
 const meta = {
   name: 'zhao',
-  version: '0.5.0',
+  version: '0.6.0',
   description: '按域名、关键词和模块快速检索本地项目',
 }
 
@@ -72,6 +72,8 @@ export const runCittyCli = async (rawArgs: string[]): Promise<void> => {
       (await import('./commands/scan.js')).default(defineCommand),
     browse: async () =>
       (await import('./commands/browse.js')).default(defineCommand),
+    open: async () =>
+      (await import('./commands/open.js')).default(defineCommand),
     list: async () =>
       (await import('./commands/list.js')).default(defineCommand),
     ci: async () => (await import('./commands/ci.js')).default(defineCommand),

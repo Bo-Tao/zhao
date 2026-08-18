@@ -3,6 +3,7 @@ const managementCommands = new Set([
   'setup',
   'scan',
   'browse',
+  'open',
   'list',
   'ci',
   'tag',
@@ -12,7 +13,7 @@ const managementCommands = new Set([
   'doctor',
 ])
 
-const futureCommands = new Set(['open', 'sync'])
+const futureCommands = new Set(['sync'])
 
 export type InvocationKind = 'management' | 'future-command' | 'search'
 

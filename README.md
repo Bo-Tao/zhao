@@ -205,6 +205,46 @@ SSH 会话或无图形界面的 Linux 环境会自动降级为打印 URL。SSH �
 
 `--copy` 只负责复制 URL，不会阻止图形界面继续打开页面；如需仅复制而不打开，请同时添加 `--print`。
 
+### `zhao open`
+
+使用本机 macOS 应用打开项目。没有查询时优先使用当前 Zhao 项目；无法识别当前目录时显示项目选择器：
+
+```bash
+# 选择项目和打开工具
+zhao open
+
+# 指定项目，再选择打开工具
+zhao open '学习报告'
+
+# 跳过工具选择，直接使用 Cursor
+zhao open '学习报告' --with cursor
+zhao open --with cursor
+```
+
+| 参数     | 简写 | 说明                                   |
+| -------- | ---- | -------------------------------------- |
+| `query`  | —    | 可选项目查询，仅支持已登记的 Zhao 项目 |
+| `--with` | `-w` | 直接使用指定工具，不显示工具选择器     |
+
+支持的工具按以下固定顺序展示，未安装的应用不会出现在选择器中：
+
+| 工具           | `--with` 参数                     |
+| -------------- | --------------------------------- |
+| VS Code        | `vscode`、`code`                  |
+| Cursor         | `cursor`                          |
+| Zed            | `zed`                             |
+| Antigravity    | `antigravity`                     |
+| Finder         | `finder`                          |
+| Terminal       | `terminal`                        |
+| iTerm2         | `iterm`、`iterm2`                 |
+| Warp           | `warp`                            |
+| Xcode          | `xcode`                           |
+| Android Studio | `android-studio`、`androidstudio` |
+
+工具参数忽略大小写。显式指定未安装的工具会报错，不会自动改用其他应用。Terminal、iTerm2 和 Warp 会收到项目目录，但最终打开新窗口还是新标签页取决于应用自身设置。
+
+该命令首版仅支持本地图形化 macOS 会话；非 macOS 或 SSH 环境会直接报错。
+
 ### `zhao ci`
 
 打开项目的测试或生产 CI 页面：

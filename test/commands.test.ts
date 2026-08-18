@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   parseBrowsePositionals,
@@ -12,7 +12,13 @@ import {
 } from '../src/commands/config.js'
 import { formatProjectInfo } from '../src/commands/info.js'
 import { formatProjectList } from '../src/commands/list.js'
+import {
+  assertProjectOpenEnvironment,
+  parseOpenPositionals,
+  runOpenCommand,
+} from '../src/commands/open.js'
 import { applyProjectTags, normalizeTagValues } from '../src/commands/tag.js'
+import { PROJECT_OPENERS } from '../src/core/project-opener.js'
 import type { MergedProject } from '../src/core/types.js'
 
 const project: MergedProject = {
@@ -59,6 +65,109 @@ describe('browse 命令', () => {
         env: {},
       }),
     ).toBe(true)
+  })
+})
+
+describe('open 命令', () => {
+  it('接受零个或一个项目 query', () => {
+    expect(parseOpenPositionals([])).toBeUndefined()
+    expect(parseOpenPositionals(['repo'])).toBe('repo')
+    expect(() => parseOpenPositionals(['repo', 'extra'])).toThrow(
+      'open 只接受一个项目查询',
+    )
+  })
+
+  it('仅允许本地图形化 macOS 会话', () => {
+    expect(() =>
+      assertProjectOpenEnvironment({ platform: 'linux', env: {} }),
+    ).toThrow('目前仅支持 macOS')
+    expect(() =>
+      assertProjectOpenEnvironment({
+        platform: 'darwin',
+        env: { SSH_CONNECTION: 'example' },
+      }),
+    ).toThrow('SSH 或无图形环境')
+    expect(() =>
+      assertProjectOpenEnvironment({ platform: 'darwin', env: {} }),
+    ).not.toThrow()
+  })
+
+  it('无工具参数时选择已安装工具，启动后输出成功信息', async () => {
+    const installed = {
+      ...PROJECT_OPENERS[1]!,
+      applicationPath: '/Applications/Cursor.app',
+    }
+    const promptProjectOpener = vi.fn().mockResolvedValue(installed)
+    const launchProject = vi.fn().mockResolvedValue(undefined)
+    const writeStatus = vi.fn()
+
+    await runOpenCommand(
+      { positionals: ['repo'] },
+      {
+        platform: 'darwin',
+        env: {},
+        detectInstalledProjectOpeners: async () => [installed],
+        ensureOnboarded: async () => undefined,
+        resolveStoredProject: async () => project,
+        promptProjectOpener,
+        launchProject,
+        writeStatus,
+      },
+    )
+
+    expect(promptProjectOpener).toHaveBeenCalledWith([installed])
+    expect(launchProject).toHaveBeenCalledWith(installed, project.path)
+    expect(writeStatus).toHaveBeenCalledWith('已使用 Cursor 打开 repo\n')
+  })
+
+  it('显式工具参数跳过工具选择', async () => {
+    const installed = {
+      ...PROJECT_OPENERS[0]!,
+      applicationPath: '/Applications/Visual Studio Code.app',
+    }
+    const promptProjectOpener = vi.fn()
+
+    await runOpenCommand(
+      { positionals: [], withTool: 'CODE' },
+      {
+        platform: 'darwin',
+        env: {},
+        detectInstalledProjectOpeners: async () => [installed],
+        ensureOnboarded: async () => undefined,
+        resolveStoredProject: async (query) => {
+          expect(query).toBeUndefined()
+          return project
+        },
+        promptProjectOpener,
+        launchProject: async () => undefined,
+        writeStatus: () => undefined,
+      },
+    )
+
+    expect(promptProjectOpener).not.toHaveBeenCalled()
+  })
+
+  it('显式指定未安装工具时不进入项目解析', async () => {
+    const ensureOnboarded = vi.fn()
+    const resolveStoredProject = vi.fn()
+
+    await expect(
+      runOpenCommand(
+        { positionals: [], withTool: 'cursor' },
+        {
+          platform: 'darwin',
+          env: {},
+          detectInstalledProjectOpeners: async () => [],
+          ensureOnboarded,
+          resolveStoredProject,
+          promptProjectOpener: vi.fn(),
+          launchProject: vi.fn(),
+          writeStatus: vi.fn(),
+        },
+      ),
+    ).rejects.toThrow('未安装或无法找到 Cursor')
+    expect(ensureOnboarded).not.toHaveBeenCalled()
+    expect(resolveStoredProject).not.toHaveBeenCalled()
   })
 })
 

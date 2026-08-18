@@ -75,6 +75,29 @@ describe('resolveProject', () => {
     })
   })
 
+  it('可为只接受登记项目的命令禁用当前位置临时项目', async ({ task }) => {
+    const root = join(tmpdir(), `resolver-${task.id}-${Date.now()}-strict`)
+    const repo = join(root, 'repo')
+    const nested = join(repo, 'src')
+    await mkdir(join(repo, '.git'), { recursive: true })
+    await mkdir(nested, { recursive: true })
+    await writeFile(
+      join(repo, '.git', 'config'),
+      '[remote "origin"]\n  url = https://git.100tal.com/group/current.git\n',
+    )
+
+    const resolved = await resolveProject(undefined, {
+      projects: [project],
+      cwd: nested,
+      state: { version: 1, entries: {} },
+      allowUnindexedCurrent: false,
+      selectProject: async (projects) => projects[0]!.project,
+      recordUse: async () => undefined,
+    })
+
+    expect(resolved.id).toBe(project.id)
+  })
+
   it('无 query 时优先识别当前目录所在的 monorepo target', async ({ task }) => {
     const root = join(tmpdir(), `resolver-${task.id}-${Date.now()}-monorepo`)
     const repo = join(root, 'platform')
