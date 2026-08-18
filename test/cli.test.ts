@@ -25,7 +25,7 @@ afterEach(() => {
 
 describe('CLI 元信息输出', () => {
   it('-v 输出版本号', async () => {
-    await expect(captureStdout(['-v'])).resolves.toBe('0.5.0\n')
+    await expect(captureStdout(['-v'])).resolves.toBe('0.6.0\n')
   })
 
   it('帮助表格的条目与说明分别左对齐', async () => {
@@ -40,6 +40,7 @@ describe('CLI 元信息输出', () => {
       'setup',
       'scan',
       'browse',
+      'open',
       'list',
       'ci',
       'tag',
@@ -56,7 +57,7 @@ describe('CLI 元信息输出', () => {
     expect(output).toContain('\nARGUMENTS\n')
     expect(output).toContain('\nOPTIONS\n')
     expect(output).toContain('\nCOMMANDS\n')
-    expect(detailLines).toHaveLength(16)
+    expect(detailLines).toHaveLength(17)
     expect(detailLines.every((line) => line !== undefined)).toBe(true)
     expect(
       new Set(detailLines.map((line) => line?.search(/[\u3400-\u9fff]/))).size,
@@ -70,6 +71,13 @@ describe('CLI 元信息输出', () => {
       expect(output).toContain('-c, --copy')
       expect(output).toContain('-p, --print')
     }
+  })
+
+  it('open 帮助展示项目查询和工具参数', async () => {
+    const output = await captureStdout(['open', '--help'])
+
+    expect(output).toContain('QUERY')
+    expect(output).toContain('-w, --with')
   })
 })
 

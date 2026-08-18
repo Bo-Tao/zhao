@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { bridgePromptOutput, formatProjectOption } from '../src/ui/prompts.js'
+import { PROJECT_OPENERS } from '../src/core/project-opener.js'
+import {
+  bridgePromptOutput,
+  formatProjectOpenerOptions,
+  formatProjectOption,
+} from '../src/ui/prompts.js'
 
 describe('Clack 输出桥接', () => {
   it('stdout 非 TTY 时借用 stderr 的终端尺寸并在结束后恢复', () => {
@@ -98,5 +103,22 @@ describe('项目选择项', () => {
       label: '运营后台 · platform',
       hint: '别名精确匹配 后台',
     })
+  })
+})
+
+describe('打开工具选择项', () => {
+  it('只展示传入的已安装工具并保持顺序', () => {
+    expect(
+      formatProjectOpenerOptions([
+        { ...PROJECT_OPENERS[0]!, applicationPath: '/Applications/Code.app' },
+        {
+          ...PROJECT_OPENERS[4]!,
+          applicationPath: '/System/Library/CoreServices/Finder.app',
+        },
+      ]),
+    ).toEqual([
+      { label: 'VS Code', value: 'vscode' },
+      { label: 'Finder', value: 'finder' },
+    ])
   })
 })

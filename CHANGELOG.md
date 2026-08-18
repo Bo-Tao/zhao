@@ -2,6 +2,18 @@
 
 本项目的主要变更都记录在此文件中。版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.6.0] - 2026-08-18
+
+### 新增
+
+- 新增 `zhao open [query]`，可从已安装的 macOS 编辑器、终端、Finder、Xcode 和 Android Studio 中选择工具打开项目。
+- 支持 `--with/-w <tool>` 直接指定工具；工具别名忽略大小写，显式指定未安装应用时会返回明确错误。
+
+### 改进
+
+- 通过 LaunchServices 按 bundle ID 检测应用，不依赖固定安装目录；非 macOS、SSH 和无图形环境会在进入项目选择前停止。
+- 原先规划中的链接别名打开命令改名为 `zhao link <alias>`，为项目应用打开功能释放 `zhao open`。
+
 ## [0.5.0] - 2026-08-14
 
 ### 改进
@@ -63,6 +75,7 @@
 - 没有新项目时不再重写 `projects.yaml`，并以空行分隔项目条目，减少无意义变更并提升可读性。
 - `zhao info` 不再显示自动生成但尚未配置的空链接。
 
+[0.6.0]: https://github.com/Bo-Tao/zhao/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/Bo-Tao/zhao/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/Bo-Tao/zhao/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/Bo-Tao/zhao/compare/0.2.0...0.3.0

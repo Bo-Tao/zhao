@@ -1,3 +1,4 @@
+import type { InstalledProjectOpener } from '../core/project-opener.js'
 import type { MergedProject, RankedProject } from '../core/types.js'
 
 const DEFAULT_TERMINAL_COLUMNS = 80
@@ -243,6 +244,30 @@ export const promptProject = async (
       prompts,
     )
     return projects.find((item) => item.project.id === id)!.project
+  })
+
+export const formatProjectOpenerOptions = (
+  openers: readonly InstalledProjectOpener[],
+): { label: string; value: string }[] =>
+  openers.map((opener) => ({
+    label: opener.name,
+    value: opener.id,
+  }))
+
+export const promptProjectOpener = async (
+  openers: readonly InstalledProjectOpener[],
+): Promise<InstalledProjectOpener> =>
+  withOutputOnStderr(async () => {
+    const prompts = await import('@clack/prompts')
+    const id = unwrap(
+      await prompts.select({
+        message: '选择打开工具',
+        maxItems: 10,
+        options: formatProjectOpenerOptions(openers),
+      }),
+      prompts,
+    )
+    return openers.find((opener) => opener.id === id)!
   })
 
 export const showNote = async (

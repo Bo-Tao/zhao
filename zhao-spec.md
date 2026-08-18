@@ -6,7 +6,7 @@
 
 > 按域名/关键词/模块检索 → 交互式选择项目 → cd 进入项目目录 → 打开 Claude Code 开始工作
 
-辅助工作流：在项目目录内（或通过检索）一键用浏览器打开 GitLab 仓库页面、构建平台的测试/生产环境页面。
+辅助工作流：在项目目录内（或通过检索）一键用桌面应用打开项目，或用浏览器打开 GitLab 仓库页面、构建平台的测试/生产环境页面。
 
 使用者：先个人使用（macOS + zsh + Warp + tmux），后续推广给前端团队。本地项目规模 50-100 个 git 仓库，分散在多个根目录下。公司 GitLab 为 `git.100tal.com`（自建 GitLab，remote 形如 `https://git.100tal.com/bigclass_xuefu_fe/tal-npm.git` 或 `git@git.100tal.com:bigclass_xuefu_fe/tal-npm.git`）。
 
@@ -211,6 +211,8 @@ CI 模板当前只支持 `{group}` 和 `{name}` 两个变量。`group` 来自 Gi
 
 选中后直接执行动作，不做二次确认。每次通过检索选中项目时更新 state.json 的 frecency 记录。
 
+`zhao open` 复用同一解析器，但关闭“将未入索引的当前 Git 仓库临时视为项目”的兼容行为；它只允许打开索引中已登记的普通项目或 monorepo target。当前位置未登记时，回退到全量项目选择器。
+
 ### 4.4 首次运行引导（onboarding 中间件）
 
 所有命令入口的前置检查，两项独立：
@@ -231,6 +233,7 @@ CI 模板当前只支持 `{group}` 和 `{name}` 两个变量。`group` 来自 Gi
 | `zhao setup`          | 安装 wrapper：检测当前 shell 与 rc 文件 → **查重**（已存在则跳过，幂等）→ 展示将写入内容 → 确认后追加 `eval "$(zhao init zsh)"` → **打印改动的文件与内容**。rc 文件为符号链接时警告（dotfiles 场景）并需再次确认                                                                                                                                           |
 | `zhao scan`           | 见 4.1。clack spinner 展示进度                                                                                                                                                                                                                                                                                                                             |
 | `zhao browse [query]` | resolveProject → remote 转 web URL（处理 SSH/HTTPS 两种格式，去 `.git` 后缀）→ `open` 打开浏览器。flags：`--copy/-c`（复制 URL 到剪贴板）、`--print/-p`。检测到无图形环境（如 SSH session）自动降级为打印 URL。拒绝多余参数（防止误当 git 透传）                                                                                                           |
+| `zhao open [query]`   | 仅限本地图形化 macOS 会话。resolveProject → 通过 LaunchServices 检测已安装工具 → 内置选择器选择工具 → 打开项目目录。`--with/-w <tool>` 可跳过工具选择。支持 VS Code、Cursor、Zed、Antigravity、Finder、Terminal、iTerm2、Warp、Xcode、Android Studio；不记录默认或最近使用工具。                                                                           |
 | `zhao list`           | 列出全部项目（名称、路径、描述）。`--json` 输出合并后的完整数据供管道/调试                                                                                                                                                                                                                                                                                 |
 
 ### v2（第二阶段）
@@ -246,11 +249,11 @@ CI 模板当前只支持 `{group}` 和 `{name}` 两个变量。`group` 来自 Gi
 
 ### 后期（本次不实现，但架构需为其留位）
 
-| 命令                | 说明                                                                                                            |
-| ------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `zhao open <alias>` | 打开 projects.yaml links 中任意别名链接（log/monitor/page…）。**顶级命令准入线：仅 browse/ci，其余一律走 open** |
-| `zhao sync`         | 从共享 git 仓库拉取合并 projects.yaml（团队协作）                                                               |
-| `zhao scan --ai`    | 对无描述仓库 headless 调 `claude -p` 生成摘要与关键词写回                                                       |
+| 命令                | 说明                                                         |
+| ------------------- | ------------------------------------------------------------ |
+| `zhao link <alias>` | 打开 projects.yaml links 中任意别名链接（log/monitor/page…） |
+| `zhao sync`         | 从共享 git 仓库拉取合并 projects.yaml（团队协作）            |
+| `zhao scan --ai`    | 对无描述仓库 headless 调 `claude -p` 生成摘要与关键词写回    |
 
 ## 6. 项目结构建议
 

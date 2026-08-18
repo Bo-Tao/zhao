@@ -18,6 +18,7 @@ export interface ResolverOptions {
   projects: MergedProject[]
   state: ZhaoState
   cwd?: string
+  allowUnindexedCurrent?: boolean
   selectProject: (projects: RankedProject[]) => Promise<MergedProject>
   recordUse: (projectId: string) => Promise<void>
 }
@@ -60,6 +61,7 @@ export const findGitRoot = async (
 const currentDirectoryProject = async (
   cwd: string,
   projects: MergedProject[],
+  allowUnindexed: boolean,
 ): Promise<MergedProject | undefined> => {
   const root = await findGitRoot(cwd)
   if (!root) {
@@ -76,6 +78,9 @@ const currentDirectoryProject = async (
     .sort((left, right) => right.path.length - left.path.length)[0]
   if (indexed) {
     return indexed
+  }
+  if (!allowUnindexed) {
+    return undefined
   }
   return {
     id,
@@ -117,6 +122,7 @@ export const resolveProject = async (
   const current = await currentDirectoryProject(
     options.cwd ?? process.cwd(),
     options.projects,
+    options.allowUnindexedCurrent ?? true,
   )
   if (current) {
     return current

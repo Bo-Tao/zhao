@@ -12,6 +12,7 @@ import { selectProject } from '../ui/select.js'
 
 export const resolveStoredProject = async (
   query?: string,
+  options: { allowUnindexedCurrent?: boolean } = {},
 ): Promise<MergedProject> => {
   const paths = getStorePaths()
   const [preferences, loaded] = await Promise.all([
@@ -28,6 +29,7 @@ export const resolveStoredProject = async (
   return resolveProject(query, {
     projects: loaded.projects,
     state: loaded.state,
+    allowUnindexedCurrent: options.allowUnindexedCurrent,
     selectProject: (projects) => selectProject(projects, preferences.useFzf),
     recordUse: async (projectId) => {
       const current = await loadState(paths)

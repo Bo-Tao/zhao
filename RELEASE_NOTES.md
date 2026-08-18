@@ -1,27 +1,43 @@
-# zhao v0.5.0
+# zhao v0.6.0
 
-这个版本重点优化终端信息展示，并减少源码扫描中的域名误报。
+这个版本新增使用本机 macOS 应用打开 Zhao 项目的能力。
 
-## 终端展示改进
+## 使用应用打开项目
 
-- `zhao list` 现在使用带表头、边框和行分隔线的对齐表格展示名称、路径与描述。
-- 表格会根据终端宽度自动收缩并截断过长内容，中文、Emoji 和组合字符也能保持正确对齐。
-- `zhao info` 按“基本信息 / 标记 / 域名 / 链接”分区展示表格，长路径和 URL 会换行显示，不会因终端较窄而丢失信息。
-- 单元格中的换行符等控制字符会被归一化，避免破坏表格布局。
+新增 `zhao open [query]`：
 
-## 域名扫描修复
+```bash
+# 选择项目和打开工具
+zhao open
 
-- 不再将 `js.configs.recommended`、`process.env.NODE_ENV`、`main.js` 等 JavaScript 成员访问、环境变量访问和资源文件名识别为域名。
-- HTTP(S) URL 仍会直接识别；`.env`、Nginx 配置及明确的 URL、host、domain、endpoint 等配置项中的裸域名仍受支持。
+# 指定项目后选择工具
+zhao open '学习报告'
 
-## 兼容性
+# 直接使用指定工具
+zhao open '学习报告' --with cursor
+zhao open --with code
+```
 
-- `zhao list --json` 的数据结构和输出保持不变。
-- 现有配置文件无需迁移。
+工具选择器按固定顺序展示本机已安装的 VS Code、Cursor、Zed、Antigravity、Finder、Terminal、iTerm2、Warp、Xcode 和 Android Studio。
+
+`--with/-w` 支持大小写不敏感的规范名称和常用别名。显式指定的工具未安装时会返回明确错误，不会自动改用其他应用。
+
+## macOS 集成
+
+- 通过 LaunchServices 按 bundle ID 查找应用，不依赖固定的 `/Applications` 路径。
+- Finder、编辑器和 IDE 接收项目目录；Terminal、iTerm2、Warp 会以项目目录启动。
+- 非 macOS、SSH 或无图形环境会在项目选择前直接报错。
+
+## 项目解析与兼容性
+
+- `zhao open` 仅打开索引中已登记的普通项目或 monorepo target。
+- 未指定 query 时优先识别当前位置；当前位置未登记时显示项目选择器。
+- 不记录默认或最近使用工具，现有配置文件无需迁移。
+- 原规划中尚未实现的链接别名打开命令改名为 `zhao link <alias>`。
 
 ## 升级
 
 ```bash
-npm install --global @botaoxyz/zhao@0.5.0
+npm install --global @botaoxyz/zhao@0.6.0
 zhao --version
 ```

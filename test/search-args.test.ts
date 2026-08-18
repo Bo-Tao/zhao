@@ -58,11 +58,19 @@ describe('入口分发', () => {
     expect(classifyInvocation(['-v'])).toBe('management')
   })
 
-  it('将 v2 命令分发到管理入口，并继续保留后期命令', () => {
-    for (const command of ['ci', 'tag', 'info', 'edit', 'config', 'doctor']) {
+  it('将 v2 命令和 open 分发到管理入口，并继续保留后期命令', () => {
+    for (const command of [
+      'ci',
+      'tag',
+      'info',
+      'edit',
+      'config',
+      'doctor',
+      'open',
+    ]) {
       expect(classifyInvocation([command])).toBe('management')
     }
-    expect(classifyInvocation(['open', 'docs'])).toBe('future-command')
+    expect(classifyInvocation(['sync'])).toBe('future-command')
     expect(classifyInvocation(['report'])).toBe('search')
   })
 })
